@@ -13,9 +13,15 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>cosmo-backend</name>
 	<description>backend for cosmo page</description>
+
 	<properties>
 		<java.version>20</java.version>
+		<spring-boot.version>3.1.4</spring-boot.version>
+		<spring-dotenv.version>4.0.0</spring-dotenv.version>
+		<maven-plugin.version>3.0.0</maven-plugin.version>
 	</properties>
+
+	<!-- spring -->
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -30,8 +36,8 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -39,23 +45,36 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
-<!--		INIT WHEN DOCKER WILL BE PROVIDED-->
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.boot</groupId>-->
-<!--			<artifactId>spring-boot-docker-compose</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--			<optional>true</optional>-->
-<!--		</dependency>-->
+
+		<!-- Database -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>r2dbc-postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Others -->
+		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>${spring-dotenv.version}</version>
+		</dependency>
+
+		<!-- testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -71,9 +90,22 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!--		INIT WHEN DOCKER WILL BE PROVIDED-->
+		<!--		<dependency>-->
+		<!--			<groupId>org.springframework.boot</groupId>-->
+		<!--			<artifactId>spring-boot-docker-compose</artifactId>-->
+		<!--			<scope>runtime</scope>-->
+		<!--			<optional>true</optional>-->
+		<!--		</dependency>-->
 	</dependencies>
 
 	<build>
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/src/integration-tests/resources</directory>
+			</testResource>
+		</testResources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -86,6 +118,25 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>${maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>add-integration-test-source-as-test-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/integration-tests/java</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
