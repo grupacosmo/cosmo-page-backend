@@ -1,0 +1,17 @@
+spring:
+  r2dbc:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1046646251191-8m5527qplk1a0c1qlbh55ls7btnsqpig.apps.googleusercontent.com
+            client-secret: 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
+            scope: openid,profile,email
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
