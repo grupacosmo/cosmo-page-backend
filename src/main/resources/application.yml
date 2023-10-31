@@ -1,0 +1,10 @@
+spring:
+  r2dbc:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+
+facebook:
+  emulator:
+    enabled: true
+  sample-token: dupa123

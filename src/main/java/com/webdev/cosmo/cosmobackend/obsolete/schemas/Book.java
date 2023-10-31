@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.schemas;
+package com.webdev.cosmo.cosmobackend.obsolete.schemas;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
