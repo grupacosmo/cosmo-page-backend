@@ -1,4 +1,4 @@
-name: Test and Deploy
+name: Java Build and Test
 
 on:
   push:
@@ -17,17 +17,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: |
-          # Install any dependencies required for running your tests
-          # Modify this step to match your project's setup
-        # Example: npm install
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'  # Choose the Java version you need
 
-      - name: Run tests
-        run: |
-          # Run your test suite
-          # Modify this step to match your project's setup
-        # Example: npm test
+      - name: Build with Maven
+        run: mvn clean install  # Modify this step for your build tool (e.g., Gradle)
 
   deploy:
     name: Deploy with Docker
@@ -47,7 +43,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          # Build your Docker image and push it to a Docker registry
+          # Build your Docker image
           docker build -t your-image-name .
           docker push your-image-name
         env:
