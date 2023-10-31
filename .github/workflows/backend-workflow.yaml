@@ -20,7 +20,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: '11'  # Choose the Java version you need
+          java-version: '20'  # Choose the Java version you need
 
       - name: Build with Maven
         run: mvn clean install  # Modify this step for your build tool (e.g., Gradle)
