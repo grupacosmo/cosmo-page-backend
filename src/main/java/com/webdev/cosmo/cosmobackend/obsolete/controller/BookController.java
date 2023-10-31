@@ -1,7 +1,7 @@
-package com.webdev.cosmo.cosmobackend.controller;
+package com.webdev.cosmo.cosmobackend.obsolete.controller;
 
-import com.webdev.cosmo.cosmobackend.repository.BookRepository;
-import com.webdev.cosmo.cosmobackend.schemas.Book;
+import com.webdev.cosmo.cosmobackend.obsolete.repository.BookRepository;
+import com.webdev.cosmo.cosmobackend.obsolete.schemas.Book;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
