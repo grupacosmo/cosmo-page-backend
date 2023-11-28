@@ -1,69 +1,48 @@
-name: Java Build and Test
+name: Code Katas CI Build
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
+  workflow_dispatch:
+    branches: [ master ]
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
+  project-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        java-version: [21, 22]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout code
+      - name: Git Checkout
         uses: actions/checkout@v2
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v3.13.0
-
-      - name: Build with Maven
-        run: mvn clean install  # Modify this step for your build tool (e.g., Gradle)
-
-  deploy:
-    name: Deploy with Docker
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
+      - name: Set JDK ${{ matrix.java-version }} from jdk.java.net
+        uses: oracle-actions/setup-java@v1
+        id: download-jdk
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        run: |
-          # Build your Docker image
-          docker build -t your-image-name .
-          docker push your-image-name
-        env:
-          DOCKER_BUILDKIT: 1
-
-      - name: SSH into your server
-        uses: appleboy/ssh-action@v0.4.0
+          website: jdk.java.net
+          release: ${{ matrix.java-version }}
+        if: ${{ matrix.java-version != 21 }}
+      - name: Set JDK ${{ matrix.java-version }} from Zulu
+        uses: actions/setup-java@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-
-      - name: Pull the latest Docker image
-        run: |
-          ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} 'docker pull your-image-name'
-          ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} 'docker stop your-container-name || true'
-          ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} 'docker rm your-container-name || true'
+          distribution: 'zulu'
+          java-version: ${{ matrix.java-version }}
+        if: ${{ matrix.java-version == 21 }}
+      - name: JDK Version
+        run: java --version
+      - name: Enable Maven Cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Maven
+        run: mvn clean install
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
-
-      - name: Start the Docker container
-        run: |
-          ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} 'docker run -d --name your-container-name -p 80:80 your-image-name'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          MAVEN_OPTS: "-Dmaven.repo.local=$HOME/.m2/repository -Xmx1g"
