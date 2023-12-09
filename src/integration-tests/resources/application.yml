@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:cosmo
+    driverClassName: org.h2.Driver
+  jpa:
+    hibernate:
+      ddlAuto: update
+
+
+facebook:
+  emulator:
+    enabled: true
+  sample-token: dupa123

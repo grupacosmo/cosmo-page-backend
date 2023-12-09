@@ -1,8 +1,11 @@
 spring:
-  r2dbc:
+  datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
 
 facebook:
   emulator:

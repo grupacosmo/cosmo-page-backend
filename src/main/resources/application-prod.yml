@@ -1,6 +1,8 @@
 spring:
-  r2dbc:
+  datasource:
     url: ${POSTGRES_PROD_URL}
     username: ${POSTGRES_PROD_USERNAME}
     password: ${POSTGRES_PROD_PASSWORD}
-
+  jpa:
+    hibernate:
+      ddl-auto: validate
