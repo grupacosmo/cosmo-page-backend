@@ -34,3 +34,5 @@ build/
 ### MAVEN ###
 .mvn
 mvnw*
+
+.env

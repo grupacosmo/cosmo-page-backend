@@ -18,6 +18,4 @@ public class VerificationController {
         return "Secured content";
     }
 
-
-
 }
