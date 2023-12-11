@@ -95,6 +95,7 @@ jobs:
         run: |
           touch key.txt && echo "${{ secrets.SERVER_KEY }}" > key.txt
           chmod 600 key.txt
+          chmod +x deploy.sh
       - name: Deploy the application
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
