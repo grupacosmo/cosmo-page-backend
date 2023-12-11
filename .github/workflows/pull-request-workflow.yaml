@@ -81,9 +81,9 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: Dockerfile-app
+          file: Dockerfile
           push: true
-          tags: tericcabrel/bmi:latest
+          tags: cosmpk/cosmo-page-backend:latest
 #  deploy:
 #    if: ${{ github.ref == 'refs/heads/master' }}
 #    runs-on: ubuntu-latest
