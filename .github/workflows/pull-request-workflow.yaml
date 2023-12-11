@@ -83,7 +83,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: cosmpk/cosmo-page-backend:latest
+          tags: cosmopk/cosmo-page-backend:latest
 #  deploy:
 #    if: ${{ github.ref == 'refs/heads/master' }}
 #    runs-on: ubuntu-latest
