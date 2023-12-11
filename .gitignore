@@ -34,3 +34,6 @@ build/
 ### MAVEN ###
 .mvn
 mvnw*
+
+### CUSTOM ###
+.env
