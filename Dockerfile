@@ -17,8 +17,6 @@ RUN addgroup -g 1001 -S cosmo
 
 RUN adduser -S cosmopk -u 1001
 
-RUN ls /project/target
-
 COPY --from=build /project/target/cosmo-backend-0-0.1-SNAPSHOT.jar /app/backend.jar
 
 WORKDIR /app
