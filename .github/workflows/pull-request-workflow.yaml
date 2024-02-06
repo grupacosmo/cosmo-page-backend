@@ -109,6 +109,6 @@ jobs:
               fi
             fi
             
-            docker run -d --rm -p 8000:8000 --name cosmo-page-backend cosmopk/cosmo-page-backend:latest
+            docker run -d --rm -p 8000:8000 --env-file /cosmo/.env-prod --name cosmo-page-backend cosmopk/cosmo-page-backend:latest
             
             exit
