@@ -100,8 +100,8 @@ jobs:
           command_timeout: 30m
           script: |
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-            docker pull cosmopk/cosmo-backend:latest
-            CONTAINER_NAME=cosmo-backend
+            docker pull cosmopk/cosmo-page-backend:latest
+
             if [ "\$(docker ps -qa -f name=\$CONTAINER_NAME)" ]; then
               if [ "\$(docker ps -q -f name=\$CONTAINER_NAME)" ]; then
                 echo "Container is running -> stopping it..."
@@ -109,6 +109,6 @@ jobs:
               fi
             fi
             
-            docker run -d --rm -p 8000:8000 --name \$CONTAINER_NAME cosmopk/cosmo-page-backend:latest
+            docker run -d --rm -p 8000:8000 --name cosmo-page-backend cosmopk/cosmo-page-backend:latest
             
             exit
