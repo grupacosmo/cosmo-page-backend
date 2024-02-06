@@ -99,6 +99,7 @@ jobs:
           port: 22
           command_timeout: 30m
           script: |
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             docker pull cosmopk/cosmo-backend:latest
             CONTAINER_NAME=cosmo-backend
             if [ "\$(docker ps -qa -f name=\$CONTAINER_NAME)" ]; then
