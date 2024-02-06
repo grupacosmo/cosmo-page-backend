@@ -102,4 +102,4 @@ jobs:
           SERVER_PORT: 22
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          ./deploy.sh SERVER_HOST=${{ secrets.SERVER_HOST }} SERVER_PORT=22 SERVER_USER=${{ secrets.SERVER_USER }}
+          ./deploy.sh ${{ secrets.SERVER_HOST }} ${{ secrets.SERVER_USER }}

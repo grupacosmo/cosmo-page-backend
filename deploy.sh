@@ -2,7 +2,7 @@
 
 start=$(date +"%s")
 
-ssh -p ${SERVER_PORT} ${SERVER_USER}@${SERVER_HOST} -i key.txt -t -t -o StrictHostKeyChecking=no << 'ENDSSH'
+ssh -p 22 $2@$1 -i key.txt -t -t -o StrictHostKeyChecking=no << 'ENDSSH'
 docker pull cosmopk/cosmo-backend:latest
 
 CONTAINER_NAME=cosmo-backend
