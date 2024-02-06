@@ -42,6 +42,11 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.0.0</version>
+		</dependency>
 
 		<!-- Database -->
 		<dependency>
@@ -83,14 +88,6 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!--		INIT WHEN DOCKER WILL BE PROVIDED-->
-		<!--		<dependency>-->
-		<!--			<groupId>org.springframework.boot</groupId>-->
-		<!--			<artifactId>spring-boot-docker-compose</artifactId>-->
-		<!--			<scope>runtime</scope>-->
-		<!--			<optional>true</optional>-->
-		<!--		</dependency>-->
 	</dependencies>
 
 	<build>
@@ -127,6 +124,28 @@
 							<sources>
 								<source>src/integration-tests/java</source>
 							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>6.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<skipValidateSpec>true</skipValidateSpec>
+							<inputSpec>./src/main/resources/schemas.yml</inputSpec>
+							<generatorName>spring</generatorName>
+							<configOptions>
+								<openApiNullable>false</openApiNullable>
+								<interfaceOnly>true</interfaceOnly>
+								<useSpringBoot3>true</useSpringBoot3>
+							</configOptions>
 						</configuration>
 					</execution>
 				</executions>

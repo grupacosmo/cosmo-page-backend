@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Cosmo page backend
+  description: |-
+    A simple banking API that allows two operations:
+    - get account balance given account number
+    - deposit amount to a account
+  version: 1.0-SNAPSHOT
+servers:
+  - url: http://localhost:808/api
+tags:
+  - name: images
+    description: images operations
+
+  - name: admin restricted
+    description: admin restricted operations
+
+  - name: permit all
+    description: operations that are open to all
+
+  - name: user
+    description: user operations
+
+paths:
+  /sample:
+    get:
+      tags:
+        - admin restricted
+      summary: Summary template
+      description: Description template
+      operationId: operationId
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sample'
+        404:
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Sample:
+      type: object
+      properties:
+        balance:
+          type: number
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
