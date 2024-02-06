@@ -102,10 +102,10 @@ jobs:
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             docker pull cosmopk/cosmo-page-backend:latest
 
-            if [ "\$(docker ps -qa -f name=\$CONTAINER_NAME)" ]; then
-              if [ "\$(docker ps -q -f name=\$CONTAINER_NAME)" ]; then
+            if [ "\$(docker ps -qa -f name=cosmo-page-backend)" ]; then
+              if [ "\$(docker ps -q -f name=cosmo-page-backend)" ]; then
                 echo "Container is running -> stopping it..."
-                docker stop \$CONTAINER_NAME;
+                docker stop cosmo-page-backend;
               fi
             fi
             
