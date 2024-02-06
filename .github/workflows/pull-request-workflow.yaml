@@ -102,5 +102,4 @@ jobs:
           SERVER_PORT: 22
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-#          set -e
           ./deploy.sh
