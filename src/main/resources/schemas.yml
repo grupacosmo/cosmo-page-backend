@@ -36,12 +36,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Sample'
-        404:
-          description: Account not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -50,8 +44,10 @@ components:
       properties:
         balance:
           type: number
-    Error:
+    ErrorResponse:
       type: object
       properties:
         message:
+          type: string
+        code:
           type: string

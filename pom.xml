@@ -141,6 +141,7 @@
 							<skipValidateSpec>true</skipValidateSpec>
 							<inputSpec>./src/main/resources/schemas.yml</inputSpec>
 							<generatorName>spring</generatorName>
+							<modelPackage>com.webdev.cosmo.cosmobackend.models</modelPackage>
 							<configOptions>
 								<openApiNullable>false</openApiNullable>
 								<interfaceOnly>true</interfaceOnly>
