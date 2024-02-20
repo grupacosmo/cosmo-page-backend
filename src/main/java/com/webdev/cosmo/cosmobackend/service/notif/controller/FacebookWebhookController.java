@@ -1,8 +1,8 @@
-package com.webdev.cosmo.cosmobackend.flows.notif.controller;
+package com.webdev.cosmo.cosmobackend.service.notif.controller;
 
-import com.webdev.cosmo.cosmobackend.flows.notif.NotifContext;
-import com.webdev.cosmo.cosmobackend.flows.notif.models.NotifStrategyRecord;
-import com.webdev.cosmo.cosmobackend.flows.templates.Strategy;
+import com.webdev.cosmo.cosmobackend.service.notif.NotifContext;
+import com.webdev.cosmo.cosmobackend.service.notif.models.NotifStrategyRecord;
+import com.webdev.cosmo.cosmobackend.service.templates.Strategy;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

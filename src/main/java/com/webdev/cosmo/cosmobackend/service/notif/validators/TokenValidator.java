@@ -1,6 +1,6 @@
-package com.webdev.cosmo.cosmobackend.flows.notif.validators;
+package com.webdev.cosmo.cosmobackend.service.notif.validators;
 
-import com.webdev.cosmo.cosmobackend.flows.notif.NotifContext;
+import com.webdev.cosmo.cosmobackend.service.notif.NotifContext;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
