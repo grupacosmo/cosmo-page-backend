@@ -1,58 +1,54 @@
 package com.webdev.cosmo.cosmobackend.posts.service;
 
-import com.webdev.cosmo.cosmobackend.posts.dto.PostDTO;
+import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
 import com.webdev.cosmo.cosmobackend.posts.exception.NotFoundException;
-import com.webdev.cosmo.cosmobackend.posts.mapper.PostDtoMapper;
+import com.webdev.cosmo.cosmobackend.posts.mapper.PostModelMapper;
 import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
+
     private final PostRepository repository;
-    private final PostDtoMapper mapper;
+    private final PostModelMapper mapper;
     @Override
-    public PostDTO createPost(PostDTO postDTO) {
+    public PostModel createPost(PostModel postModel) {
 
-        Post post = mapper.dtoToPost(postDTO);
+        Post savedPost = repository.save(mapper.modelToPost(postModel));
+        PostModel savedPostModel = mapper.simpleMap(savedPost);
 
-        Post savedPost = repository.save(post);
-        PostDTO savedPostDTO = mapper.postToDto(savedPost);
-
-        return savedPostDTO;
+        return savedPostModel;
     }
 
     @Override
-    public PostDTO getPostById(Long id) {
+    public PostModel getPostById(Long id) {
         Post post = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Post with id " + id + " not found"));
 
-        return mapper.postToDto(post);
+        return mapper.simpleMap(post);
     }
 
     @Override
-    public List<PostDTO> getAllPosts() {
+    public List<PostModel> getAllPosts() {
         List<Post> posts = repository.findAll();
 
-        return posts.stream()
-                .map(post -> mapper.postToDto(post))
-                .collect(Collectors.toList());
+        return mapper.map(posts);
     }
 
     @Override
-    public PostDTO updatePost(Long id, PostDTO postDTO) {
+    public PostModel updatePost(Long id, PostModel postModel) {
         Post existingPost = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Post with id " + id + " not found"));
 
-        existingPost.setTitle(postDTO.getTitle());
-        existingPost.setDescription(postDTO.getDescription());
-        existingPost.setImageId(postDTO.getImageId());
+        existingPost.setTitle(postModel.getTitle());
+        existingPost.setDescription(postModel.getDescription());
+        existingPost.setImageId(postModel.getImageId());
         Post updatedPost = repository.save(existingPost);
 
-        return mapper.postToDto(updatedPost);
+        return mapper.simpleMap(updatedPost);
     }
 
     @Override

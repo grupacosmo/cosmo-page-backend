@@ -1,11 +1,9 @@
 package com.webdev.cosmo.cosmobackend.posts.controller;
 
-import com.webdev.cosmo.cosmobackend.posts.dto.PostDTO;
-import com.webdev.cosmo.cosmobackend.posts.exception.NotFoundException;
+import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
 import com.webdev.cosmo.cosmobackend.posts.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,45 +15,34 @@ public class PostController {
     private final PostService service;
 
     @PostMapping
-    public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO post) {
-        PostDTO savedPost = service.createPost(post);
-        return new ResponseEntity<>(savedPost, HttpStatus.CREATED);
+    @ResponseStatus(HttpStatus.CREATED)
+    public PostModel createPost(@RequestBody PostModel post) {
+        return service.createPost(post);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PostDTO> getPostById(@PathVariable("id") Long postId) {
-        try {
-            PostDTO post = service.getPostById(postId);
-            return new ResponseEntity<>(post, HttpStatus.OK);
-        } catch (NotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @GetMapping("/{postId}")
+    @ResponseStatus(HttpStatus.OK)
+    public PostModel getPostById(@PathVariable Long postId) {
+        return service.getPostById(postId);
     }
 
     @GetMapping
-    public ResponseEntity<List<PostDTO>> getAllPosts() {
-        List<PostDTO> posts = service.getAllPosts();
-        return new ResponseEntity<>(posts, HttpStatus.OK);
+    @ResponseStatus(HttpStatus.OK)
+    public List<PostModel> getAllPosts() {
+        return service.getAllPosts();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable("id") Long postId,
-                                              @RequestBody PostDTO postDTO) {
-        try {
-            PostDTO updatedPost = service.updatePost(postId, postDTO);
-            return new ResponseEntity<>(updatedPost, HttpStatus.OK);
-        } catch (NotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @PutMapping("/{postId}")
+    @ResponseStatus(HttpStatus.OK)
+    public PostModel updatePost(@PathVariable Long postId,
+                                @RequestBody PostModel postModel) {
+        return service.updatePost(postId, postModel);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable("id") Long postId) {
-        try {
-            service.deletePost(postId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @DeleteMapping("/{postId}")
+    @ResponseStatus(HttpStatus.OK)
+    public String deletePost(@PathVariable Long postId) {
+        service.deletePost(postId);
+        return "id: " + postId;
     }
 }
