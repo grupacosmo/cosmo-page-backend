@@ -35,13 +35,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sample'
+                $ref: "#/components/schemas/Sample"
         404:
           description: Account not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -60,7 +60,7 @@ components:
       properties:
         id:
           type: string
-        url   :
+        url:
           type: string
     AccessTokenRs:
       type: object
@@ -69,3 +69,12 @@ components:
           type: string
         access_token:
           type: string
+    Post:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        imageId:
+          type: number
