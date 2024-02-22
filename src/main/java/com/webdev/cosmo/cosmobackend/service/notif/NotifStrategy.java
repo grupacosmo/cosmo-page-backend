@@ -1,6 +1,6 @@
-package com.webdev.cosmo.cosmobackend.flows.notif;
+package com.webdev.cosmo.cosmobackend.service.notif;
 
-import com.webdev.cosmo.cosmobackend.flows.templates.Strategy;
+import com.webdev.cosmo.cosmobackend.service.templates.Strategy;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

@@ -55,3 +55,10 @@ components:
       properties:
         message:
           type: string
+    ImageModel:
+      type: object
+      properties:
+        id:
+          type: string
+        url   :
+          type: string

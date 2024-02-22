@@ -1,10 +1,9 @@
-package com.webdev.cosmo.cosmobackend.flows.notif.config;
+package com.webdev.cosmo.cosmobackend.service.notif.config;
 
-import com.webdev.cosmo.cosmobackend.flows.notif.NotifContext;
-import com.webdev.cosmo.cosmobackend.flows.notif.NotifStrategy;
-import com.webdev.cosmo.cosmobackend.flows.notif.validators.TokenValidator;
-import com.webdev.cosmo.cosmobackend.flows.templates.Strategy;
-import com.webdev.cosmo.cosmobackend.flows.templates.TokenFromRequestProvider;
+import com.webdev.cosmo.cosmobackend.service.notif.NotifContext;
+import com.webdev.cosmo.cosmobackend.service.notif.NotifStrategy;
+import com.webdev.cosmo.cosmobackend.service.notif.validators.TokenValidator;
+import com.webdev.cosmo.cosmobackend.service.templates.Strategy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

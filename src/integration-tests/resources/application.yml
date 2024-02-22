@@ -11,3 +11,6 @@ facebook:
   emulator:
     enabled: true
   sample-token: dupa123
+
+env:
+  url: ""
