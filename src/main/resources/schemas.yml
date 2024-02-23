@@ -62,3 +62,10 @@ components:
           type: string
         url   :
           type: string
+    AccessTokenRs:
+      type: object
+      properties:
+        token_type:
+          type: string
+        access_token:
+          type: string
