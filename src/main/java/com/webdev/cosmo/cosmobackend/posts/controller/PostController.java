@@ -1,12 +1,15 @@
 package com.webdev.cosmo.cosmobackend.posts.controller;
 
 import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
+import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.posts.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/posts")
@@ -21,28 +24,26 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    @ResponseStatus(HttpStatus.OK)
-    public PostModel getPostById(@PathVariable Long postId) {
+    public PostModel getPostById(@PathVariable String postId) {
         return service.getPostById(postId);
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<PostModel> getAllPosts() {
         return service.getAllPosts();
     }
 
     @PutMapping("/{postId}")
-    @ResponseStatus(HttpStatus.OK)
-    public PostModel updatePost(@PathVariable Long postId,
-                                @RequestBody PostModel postModel) {
-        return service.updatePost(postId, postModel);
+    public PostModel updatePost(@PathVariable String postId,
+                                @RequestBody Post post) {
+        return service.updatePost(postId, post);
     }
 
     @DeleteMapping("/{postId}")
-    @ResponseStatus(HttpStatus.OK)
-    public String deletePost(@PathVariable Long postId) {
+    public Map<String, String> deletePost(@PathVariable String postId) {
         service.deletePost(postId);
-        return "id: " + postId;
+        return new HashMap<String, String>() {{
+            put("id", postId);
+        }};
     }
 }

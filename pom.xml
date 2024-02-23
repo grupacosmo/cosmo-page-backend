@@ -92,7 +92,7 @@
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
-			<version>${org.mapstruct.version}</version>
+			<version>${mapstruct.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -151,7 +151,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${org.apache.maven.plugins.version}</version>
+				<version>${plugins.version}</version>
 				<configuration>
 					<annotationProcessorPaths>
 						<path>
@@ -195,7 +195,7 @@
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>${org.mapstruct.version}</version>
+							<version>${mapstruct.version}</version>
 						</path>
 					</annotationProcessorPaths>
 					<compilerArgs>

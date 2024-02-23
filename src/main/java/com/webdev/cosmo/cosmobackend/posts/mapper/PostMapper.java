@@ -7,8 +7,8 @@ import org.mapstruct.Mapper;
 import java.util.List;
 
 @Mapper
-public interface PostModelMapper {
-    PostModel simpleMap(Post post);
-    Post modelToPost(PostModel postModel);
+public interface PostMapper {
+    PostModel map(Post post);
     List<PostModel> map(List<Post> posts);
+    Post map(PostModel postModel);
 }

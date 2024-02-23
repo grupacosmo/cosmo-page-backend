@@ -72,9 +72,13 @@ components:
     Post:
       type: object
       properties:
+        id:
+          type: string
         title:
           type: string
         description:
           type: string
-        imageId:
-          type: number
+        imageIds:
+          type: array
+          items:
+            type: string
