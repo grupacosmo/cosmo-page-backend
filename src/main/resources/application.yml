@@ -12,6 +12,8 @@ facebook:
   emulator:
     enabled: true
   sample-token: dupa123
+  client-id: ${CLIENT_ID}
+  client-secret: ${CLIENT_SECRET}
 
 images:
   types:
