@@ -38,18 +38,18 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if(isNull(accessToken)){
-            throw new RuntimeException("Invalid token");
+        if(isNull(accessToken) || isNull(userId)){
+            throw new RuntimeException("Invalid token or user id");
         }
 
-        FacebookUser facebookUser = new FacebookUser(userId, accessToken);
-        Authentication authenticatedUser = customAuthenticationManager.authenticate(facebookUser);
+
+        FacebookAuthentication facebookAuthentication = new FacebookAuthentication(new FacebookUser(accessToken, userId));
+        Authentication authenticatedUser = customAuthenticationManager.authenticate(facebookAuthentication);
 
         SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
         filterChain.doFilter(request, response);
 
     }
-
 
     private boolean isPermitAllEndpoint(String requestURI){
         return securedEndpoints.stream().noneMatch(requestURI::startsWith);
