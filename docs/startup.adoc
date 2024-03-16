@@ -1,0 +1,112 @@
+= Spring Boot Application Documentation
+:doctype: book
+:icons: font
+:toc: left
+:toclevels: 4
+:sectlinks:
+:sectnums:
+
+== Overview
+
+This document provides comprehensive guidance on deploying, configuring, and running the Spring Boot application. It covers the necessary steps to deploy the application to a production environment, manage configuration through environment variables and profiles, and other operational considerations.
+
+== Prerequisites
+
+Before deploying the Spring Boot application, ensure that you have the following prerequisites installed and configured on your deployment environment:
+
+- Java JDK 17 or newer
+- Maven 3.6.0 or IDE based
+- Access to a PostgreSQL database
+
+== Building the Application
+
+To build the application, navigate to the root directory of the project and run the following Maven command:
+
+----
+$ mvn clean install
+----
+
+This command generates a `.jar` file within the `target/` directory, which can be deployed to your server.
+
+Eventually You can run this with
+
+----
+$ mvn spring-boot:run
+----
+
+Which will not generate jar but only run it.
+
+== Deployment
+
+Currently, application does not support more than two environments which are seen as local and prod.
+
+=== Local Deployment
+In order to deploy this application locally, you will have to have up and running local
+database setup (described here) via docker-compose command.
+
+----
+$ docker-compose up -b
+----
+
+When it comes to application, there are two ways of running it. First is simply via IDE, or eventually
+using compose.yml and running above-mentioned command.
+
+=== Remote Deployment
+
+This section describes the steps to deploy the Spring Boot application on a server.
+
+== Configuration
+
+Spring Boot applications are configured via the `application.yml` and `application-prod.yml` files. Environment-specific configurations is managed through separate configuration files or environment variables.
+
+=== Sample `.env` File
+
+Create a `.env` file to store environment variables:
+
+For prod
+----
+POSTGRES_USERNAME=
+POSTGRES_PASSWORD=
+POSTGRES_URL=
+CLIENT_ID=
+CLIENT_SECRET=
+FB_TOKEN=
+PROD_URL
+----
+
+For local
+----
+CLIENT_ID=
+CLIENT_SECRET=
+----
+
+=== Profiles
+
+Spring Boot profiles offer a way to segregate parts of your application configuration and make it available only in certain environments. In order to run with specific
+profile, use `spring.profiles.active` property. Currently, two profiles are supported:
+
+----
+spring.profiles.active=local (or none)
+spring.profiles.active=prod
+----
+
+== Running with Profiles
+
+To run your application with a specific profile, use the following command:
+
+----
+$ java -jar -Dspring.profiles.active=prod your-application.jar
+----
+
+Replace `prod` with your target profile (e.g., `dev`, `test`, `prod`).
+
+== Maintenance and Monitoring
+
+
+=== Actuator
+
+Spring Boot Actuator provides production-ready features to help you monitor and manage your application. Add the Spring Boot Actuator to your project's dependencies to utilize these features.
+
+== Conclusion
+
+This document outlines the essential steps for deploying and managing a Spring Boot application. It is important to tailor this guide to fit the specific needs of your application and operational environment.
