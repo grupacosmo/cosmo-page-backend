@@ -1,6 +1,6 @@
 package com.webdev.cosmo.cosmobackend.service.external;
 
-import com.webdev.cosmo.cosmobackend.security.FacebookUser;
+import org.openapitools.model.FacebookUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

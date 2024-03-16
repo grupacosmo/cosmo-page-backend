@@ -4,6 +4,7 @@ import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
 import feign.FeignException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.model.FacebookUser;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -19,14 +20,13 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         FacebookAuthentication facebookAuthentication = (FacebookAuthentication) authentication;
-        FacebookUser principal = (FacebookUser)facebookAuthentication.getPrincipal();
 
         try {
-            FacebookUser facebookResponse = facebookClient.verifyToken(principal.getUserId(), principal.getAccessToken(), "id,name,email,picture");
+            FacebookUser facebookResponse = facebookClient.verifyToken((String) facebookAuthentication.getPrincipal(), (String) facebookAuthentication.getCredentials(), "id,name,email,picture");
             facebookAuthentication.setAuthenticated(true);
-            facebookAuthentication.setFacebookUser(facebookResponse);
-        }catch(FeignException e){
+        } catch (FeignException e) {
             log.error(e.getMessage());
+            facebookAuthentication.setAuthenticated(false);
         }
 
         return facebookAuthentication;
