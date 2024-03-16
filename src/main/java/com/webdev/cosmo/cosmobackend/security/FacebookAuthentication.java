@@ -1,24 +1,22 @@
 package com.webdev.cosmo.cosmobackend.security;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 
 
-@Getter
-@Setter
-@AllArgsConstructor
 public class FacebookAuthentication implements Authentication {
 
     private boolean authenticated = false;
-    private FacebookUser facebookUser;
+    private final String userId;
+    private final String accessToken;
 
-    public FacebookAuthentication(FacebookUser facebookUser) {
-        this.facebookUser = facebookUser;
+    private String email;
+
+    public FacebookAuthentication(String userId, String accessToken) {
+        this.userId = userId;
+        this.accessToken = accessToken;
     }
 
     @Override
@@ -28,7 +26,7 @@ public class FacebookAuthentication implements Authentication {
 
     @Override
     public Object getCredentials() {
-        return null;
+        return accessToken;
     }
 
     @Override
@@ -38,7 +36,7 @@ public class FacebookAuthentication implements Authentication {
 
     @Override
     public Object getPrincipal() {
-        return facebookUser;
+        return userId;
     }
 
     @Override
@@ -53,6 +51,6 @@ public class FacebookAuthentication implements Authentication {
 
     @Override
     public String getName() {
-        return null;
+        return email;
     }
 }

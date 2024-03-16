@@ -27,8 +27,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String userId = request.getHeader("user_id");
-        String accessToken = request.getHeader("access_token");
+        final String userId = request.getHeader("user_id");
+        final String accessToken = request.getHeader("access_token");
 
         String requestURI = request.getRequestURI();
 
@@ -39,11 +39,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if(isNull(accessToken) || isNull(userId)){
-            throw new RuntimeException("Invalid token or user id");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
 
-        FacebookAuthentication facebookAuthentication = new FacebookAuthentication(new FacebookUser(accessToken, userId));
+        FacebookAuthentication facebookAuthentication = new FacebookAuthentication(userId, accessToken);
         Authentication authenticatedUser = customAuthenticationManager.authenticate(facebookAuthentication);
 
         SecurityContextHolder.getContext().setAuthentication(authenticatedUser);

@@ -23,3 +23,7 @@ images:
 
 env:
   url: http://localhost:8080
+
+endpoint:
+  secured:
+    /user
