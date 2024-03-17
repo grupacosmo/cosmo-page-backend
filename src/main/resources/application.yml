@@ -26,4 +26,4 @@ env:
 
 endpoint:
   secured:
-    /user
+    - /user
