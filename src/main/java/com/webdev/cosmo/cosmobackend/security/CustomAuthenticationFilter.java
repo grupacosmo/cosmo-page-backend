@@ -1,5 +1,6 @@
 package com.webdev.cosmo.cosmobackend.security;
 
+import com.webdev.cosmo.cosmobackend.config.properties.EndpointConfig;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,19 +9,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Set;
 
 import static java.util.Objects.isNull;
 
-@Component
+
 @RequiredArgsConstructor
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Set<String> securedEndpoints = Set.of("/user");
+    private final EndpointConfig endpointConfig;
 
     private final AuthenticationManager customAuthenticationManager;
 
@@ -53,7 +52,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isPermitAllEndpoint(String requestURI){
-        return securedEndpoints.stream().noneMatch(requestURI::startsWith);
+       return  endpointConfig.getSecured().stream().noneMatch(requestURI::startsWith);
     }
 
 }

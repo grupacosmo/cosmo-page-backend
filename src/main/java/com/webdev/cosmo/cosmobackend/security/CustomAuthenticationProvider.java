@@ -8,10 +8,8 @@ import org.openapitools.model.FacebookUser;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 @AllArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
