@@ -11,6 +11,8 @@ facebook:
   emulator:
     enabled: true
   sample-token: dupa123
+  client-id: ""
+  client-secret: ""
 
 env:
   url: ""

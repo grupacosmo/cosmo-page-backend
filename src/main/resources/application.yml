@@ -1,12 +1,15 @@
 spring:
   datasource:
-    url: ${POSTGRES_URL}
-    username: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/cosmo_backend
+    username: postgres
+    password: postgres
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
+  profiles:
+    active:
+      local
 
 facebook:
   emulator:

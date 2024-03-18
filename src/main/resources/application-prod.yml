@@ -1,8 +1,27 @@
 spring:
   datasource:
-    url: ${POSTGRES_PROD_URL}
-    username: ${POSTGRES_PROD_USERNAME}
-    password: ${POSTGRES_PROD_PASSWORD}
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
+  profiles:
+    active:
+      prod
+
+facebook:
+  emulator:
+    enabled: false
+  sample-token: ${FB_TOKEN}
+  client-id: ${CLIENT_ID}
+  client-secret: ${CLIENT_SECRET}
+
+images:
+  types:
+    - png
+    - jpg
+    - jpeg
+
+env:
+  url: ${PROD_URL}
