@@ -15,6 +15,7 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository repository;
     private final PostMapper mapper;
+
     @Override
     public PostModel createPost(Post post) {
         return mapper.map(repository.save(post));
