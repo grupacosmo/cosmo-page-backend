@@ -69,7 +69,7 @@ components:
           type: string
         access_token:
           type: string
-    Post:
+    PostModel:
       type: object
       properties:
         id:

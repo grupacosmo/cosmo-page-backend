@@ -1,8 +1,8 @@
 package com.webdev.cosmo.cosmobackend.posts.mapper;
 
-import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
 import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import org.mapstruct.Mapper;
+import org.openapitools.model.PostModel;
 
 import java.util.List;
 

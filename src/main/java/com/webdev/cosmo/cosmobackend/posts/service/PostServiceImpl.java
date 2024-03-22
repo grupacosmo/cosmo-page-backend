@@ -1,13 +1,14 @@
 package com.webdev.cosmo.cosmobackend.posts.service;
 
-import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
-import com.webdev.cosmo.cosmobackend.posts.exception.NotFoundException;
 import com.webdev.cosmo.cosmobackend.posts.mapper.PostMapper;
 import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.openapitools.model.PostModel;
 
 import java.util.List;
+
+import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_REQUEST;
 
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
@@ -15,17 +16,14 @@ public class PostServiceImpl implements PostService {
     private final PostRepository repository;
     private final PostMapper mapper;
     @Override
-    public PostModel createPost(PostModel postModel) {
-
-        Post savedPost = repository.save(mapper.map(postModel));
-
-        return mapper.map(savedPost);
+    public PostModel createPost(Post post) {
+        return mapper.map(repository.save(post));
     }
 
     @Override
     public PostModel getPostById(String id) {
         Post post = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Post with id " + id + " not found"));
+                .orElseThrow(INVALID_REQUEST::getError);
 
         return mapper.map(post);
     }
@@ -40,7 +38,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostModel updatePost(String id, Post post) {
         Post existingPost = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Post with id " + id + " not found"));
+                .orElseThrow(INVALID_REQUEST::getError);
 
         existingPost.setTitle(post.getTitle())
                     .setDescription(post.getDescription())
@@ -54,7 +52,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(String id) {
         Post post = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Post with id " + id + " not found"));
+                .orElseThrow(INVALID_REQUEST::getError);
 
         repository.delete(post);
     }

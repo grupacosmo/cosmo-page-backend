@@ -1,9 +1,9 @@
 package com.webdev.cosmo.cosmobackend.posts.controller;
 
-import com.webdev.cosmo.cosmobackend.posts.dto.PostModel;
 import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.posts.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.openapitools.model.PostModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +19,7 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PostModel createPost(@RequestBody PostModel post) {
+    public PostModel createPost(@RequestBody Post post) {
         return service.createPost(post);
     }
 
