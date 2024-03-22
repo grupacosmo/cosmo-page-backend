@@ -20,12 +20,13 @@
 		<spring-dotenv.version>4.0.0</spring-dotenv.version>
 		<maven-plugin.version>3.0.0</maven-plugin.version>
 		<postgresql-container.version>1.17.3</postgresql-container.version>
-		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-		<org.mapstruct.binding.version>0.2.0</org.mapstruct.binding.version>
+		<mapstruct.version>1.5.5.Final</mapstruct.version>
+		<lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
 		<faker.version>0.15</faker.version>
 		<gson.version>2.10.1</gson.version>
 		<commons-io.version>2.15.1</commons-io.version>
 		<spring-cloud.version>2022.0.3</spring-cloud.version>
+		<plugins.version>3.8.0</plugins.version>
 	</properties>
 
 	<dependencies>
@@ -92,7 +93,7 @@
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
-			<version>${org.mapstruct.version}</version>
+			<version>${mapstruct.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -151,7 +152,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>${plugins.version}</version>
 				<configuration>
 					<annotationProcessorPaths>
 						<path>
@@ -162,12 +163,12 @@
 						<dependency>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok-mapstruct-binding</artifactId>
-							<version>${org.mapstruct.binding.version}</version>
+							<version>${lombok.mapstruct.binding.version}</version>
 						</dependency>
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>${org.mapstruct.version}</version>
+							<version>${mapstruct.version}</version>
 						</path>
 					</annotationProcessorPaths>
 					<compilerArgs>
@@ -181,12 +182,28 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<excludes>
-						<exclude>
+					<annotationProcessorPaths>
+						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
+							<version>${lombok.version}</version>
+						</path>
+						<dependency>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok-mapstruct-binding</artifactId>
+							<version>${lombok.mapstruct.binding.version}</version>
+						</dependency>
+						<path>
+							<groupId>org.mapstruct</groupId>
+							<artifactId>mapstruct-processor</artifactId>
+							<version>${mapstruct.version}</version>
+						</path>
+					</annotationProcessorPaths>
+					<compilerArgs>
+						<compilerArg>
+							-Amapstruct.defaultComponentModel=spring
+						</compilerArg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 			<plugin>

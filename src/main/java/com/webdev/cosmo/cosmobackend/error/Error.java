@@ -7,7 +7,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum Error {
-    INVALID_IMAGE_DATA("Invalid image data", HttpStatus.BAD_REQUEST);
+    INVALID_IMAGE_DATA("Invalid image data", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST("Invalid request", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;
