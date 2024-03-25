@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import static java.util.Objects.isNull;
 
@@ -39,9 +40,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         if(isNull(accessToken) || isNull(userId)){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+
+            PrintWriter writer = response.getWriter();
+            writer.print("No access token or user id");
+            writer.flush();
             return;
         }
-
 
         FacebookAuthentication facebookAuthentication = new FacebookAuthentication(userId, accessToken);
         Authentication authenticatedUser = customAuthenticationManager.authenticate(facebookAuthentication);
