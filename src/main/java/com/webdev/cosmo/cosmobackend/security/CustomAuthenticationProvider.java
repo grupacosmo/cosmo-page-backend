@@ -22,6 +22,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         try {
             FacebookUser facebookResponse = facebookClient.verifyToken((String) facebookAuthentication.getPrincipal(), (String) facebookAuthentication.getCredentials(), "id,name,email,picture");
             facebookAuthentication.setAuthenticated(true);
+            facebookAuthentication.setEmail(facebookResponse.getEmail());
         } catch (FeignException e) {
             log.error(e.getMessage());
             facebookAuthentication.setAuthenticated(false);

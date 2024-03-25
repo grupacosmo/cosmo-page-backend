@@ -1,17 +1,17 @@
 package com.webdev.cosmo.cosmobackend.security;
 
+import lombok.Setter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 
-
+@Setter
 public class FacebookAuthentication implements Authentication {
 
     private boolean authenticated = false;
     private final String userId;
     private final String accessToken;
-
     private String email;
 
     public FacebookAuthentication(String userId, String accessToken) {
