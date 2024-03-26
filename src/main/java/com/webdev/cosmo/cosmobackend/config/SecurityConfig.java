@@ -8,6 +8,7 @@ import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,17 +23,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SecurityConfig {
 
     @Bean
-    CustomAuthenticationProvider authenticationProvider(FacebookClient facebookClient) {
+    AuthenticationProvider authenticationProvider(final FacebookClient facebookClient) {
         return new CustomAuthenticationProvider(facebookClient);
     }
 
     @Bean
-    OncePerRequestFilter customAuthenticationFilter(EndpointConfig endpointConfig, CustomAuthenticationManager customAuthenticationManager) {
+    OncePerRequestFilter customAuthenticationFilter(final EndpointConfig endpointConfig, final AuthenticationManager customAuthenticationManager) {
         return new CustomAuthenticationFilter(endpointConfig, customAuthenticationManager);
     }
 
     @Bean
-    CustomAuthenticationManager customAuthenticationManager(AuthenticationProvider authenticationProvider) {
+    AuthenticationManager customAuthenticationManager(final AuthenticationProvider authenticationProvider) {
         return new CustomAuthenticationManager(authenticationProvider);
     }
 

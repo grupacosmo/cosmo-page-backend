@@ -1,6 +1,9 @@
 package com.webdev.cosmo.cosmobackend.security;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.webdev.cosmo.cosmobackend.config.properties.EndpointConfig;
+import com.webdev.cosmo.cosmobackend.error.Error;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import static java.util.Objects.isNull;
+
 
 
 @RequiredArgsConstructor
@@ -41,9 +45,16 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         if(isNull(accessToken) || isNull(userId)){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
+            Error errorResponse = Error.NO_ACCESS_TOKEN_OR_USER_ID;
+
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(Error.class, new Error.Serializer())
+                    .create();
+
+            String jsonErrorResponse = gson.toJson(errorResponse);
 
             PrintWriter writer = response.getWriter();
-            writer.print("No access token or user id");
+            writer.print(jsonErrorResponse);
             writer.flush();
             return;
         }
