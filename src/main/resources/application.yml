@@ -1,12 +1,11 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/cosmo_backend
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/db
     username: postgres
     password: postgres
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
+  flyway:
+    schemas: cosmo_backend
+    url: jdbc:postgresql://localhost:5432/db
   profiles:
     active:
       local

@@ -2,7 +2,7 @@ services:
   postgres:
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=cosmo_backend'
+      - 'POSTGRES_DB=db'
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:

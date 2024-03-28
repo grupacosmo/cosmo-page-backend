@@ -5,8 +5,11 @@ import com.webdev.cosmo.cosmobackend.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostModel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_REQUEST;
 
@@ -15,46 +18,38 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository repository;
     private final PostMapper mapper;
+    private final Function<Post, Post> postUpdater;
 
     @Override
-    public PostModel createPost(Post post) {
-        return mapper.map(repository.save(post));
+    public Mono<PostModel> createPost(Post post) {
+        return repository.save(post)
+                .map(mapper::map);
     }
 
     @Override
-    public PostModel getPostById(String id) {
-        Post post = repository.findById(id)
-                .orElseThrow(INVALID_REQUEST::getError);
-
-        return mapper.map(post);
+    public Mono<PostModel> getPostById(String id) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(INVALID_REQUEST.getError()))
+                .map(mapper::map);
     }
 
     @Override
-    public List<PostModel> getAllPosts() {
-        List<Post> posts = repository.findAll();
-
-        return mapper.map(posts);
+    public Flux<PostModel> getAllPosts() {
+        return repository.findAll()
+                .map(mapper::map);
     }
 
     @Override
-    public PostModel updatePost(String id, Post post) {
-        Post existingPost = repository.findById(id)
-                .orElseThrow(INVALID_REQUEST::getError);
-
-        existingPost.setTitle(post.getTitle())
-                    .setDescription(post.getDescription())
-                    .setImageIds(post.getImageIds());
-
-        Post updatedPost = repository.save(existingPost);
-
-        return mapper.map(updatedPost);
+    public Mono<PostModel> updatePost(String id, Post post) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(INVALID_REQUEST.getError()))
+                .map(postUpdater::apply)
+                .flatMap(repository::save)
+                .map(mapper::map);
     }
 
     @Override
     public void deletePost(String id) {
-        Post post = repository.findById(id)
-                .orElseThrow(INVALID_REQUEST::getError);
-
-        repository.delete(post);
+        repository.deleteById(id);
     }
 }
