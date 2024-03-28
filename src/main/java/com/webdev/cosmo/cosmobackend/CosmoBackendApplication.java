@@ -2,13 +2,14 @@ package com.webdev.cosmo.cosmobackend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @SpringBootApplication
 @EnableFeignClients
+@EnableR2dbcRepositories
 public class CosmoBackendApplication {
 
 	public static void main(String[] args) {

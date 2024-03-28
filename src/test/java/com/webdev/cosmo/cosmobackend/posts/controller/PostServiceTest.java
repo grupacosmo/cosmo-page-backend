@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openapitools.model.PostModel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,11 +58,12 @@ class PostServiceTest {
                 .description("No nareszcie!")
                 .imageIds(Arrays.asList("img1")));
 
-        when(postRepository.findAll()).thenReturn(posts);
-        when(mapper.map(posts)).thenReturn(mappedPosts);
+        when(postRepository.findAll()).thenReturn(Flux.fromIterable(posts));
+        when(mapper.map(posts.get(0))).thenReturn(mappedPosts.get(0));
+        when(mapper.map(posts.get(1))).thenReturn(mappedPosts.get(1));
 
         // when
-        List<PostModel> result = postService.getAllPosts();
+        List<PostModel> result = postService.getAllPosts().toStream().toList();
 
         // then
         assertEquals(mappedPosts, result);
@@ -81,11 +84,11 @@ class PostServiceTest {
                 .description("No nareszcie!")
                 .imageIds(Arrays.asList("img1"));
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findById(postId)).thenReturn(Mono.just(post));
         when(mapper.map(post)).thenReturn(mappedPost);
 
         // when
-        PostModel result = postService.getPostById(postId);
+        PostModel result = postService.getPostById(postId).block();
 
         // then
         assertNotNull(result);
@@ -96,7 +99,7 @@ class PostServiceTest {
     }
 
     @Test
-    void getPostById_nonExistingId_shouldReturnINVALID_REQUEST() {
+    void getPostById_nonExistingId_shouldReturnThrowInvalidRequest() {
 
     }
 
@@ -114,11 +117,11 @@ class PostServiceTest {
                 .description("No nareszcie!")
                 .imageIds(Arrays.asList("img1"));
 
-        when(postRepository.save(post)).thenReturn(post);
+        when(postRepository.save(post)).thenReturn(Mono.just(post));
         when(mapper.map(post)).thenReturn(mappedPost);
 
         //when
-        PostModel result = postService.createPost(post);
+        PostModel result = postService.createPost(post).block();
 
         //then
         assertNotNull(result);
@@ -148,13 +151,11 @@ class PostServiceTest {
                 .setDescription("No nareszcie!")
                 .setImageIds(Arrays.asList("img1"));
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
-
         // when
         postService.deletePost(postId);
 
         //then
-        verify(postRepository, times(1)).delete(post);
+        verify(postRepository, times(1)).deleteById(anyString());
     }
 
     @Test

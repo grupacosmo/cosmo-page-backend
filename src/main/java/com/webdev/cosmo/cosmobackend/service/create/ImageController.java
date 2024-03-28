@@ -5,6 +5,8 @@ import org.openapitools.model.ImageModel;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -16,12 +18,12 @@ public class ImageController {
     private final ImageService imageService;
 
     @PostMapping
-    public List<ImageModel> uploadImage(@RequestParam("images") List<MultipartFile> images) {
+    public Flux<ImageModel> uploadImage(@RequestParam("images") List<MultipartFile> images) {
         return imageService.save(images);
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] getImage(@PathVariable String id) {
+    public Mono<byte[]> getImage(@PathVariable String id) {
         return imageService.findById(id);
     }
 }

@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.ImageModel;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -21,17 +23,14 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final ImageMapper imageMapper;
 
-    public List<ImageModel> save(List<MultipartFile> images) {
-        List<Image> savedImages = imageRepository.saveAll(imageMapper.map(images));
-
-        log.info("Saved Images: " + savedImages);
-
-        return imageMapper.mapToModel(savedImages);
+    public Flux<ImageModel> save(List<MultipartFile> images) {
+        return imageRepository.saveAll(imageMapper.map(images))
+                .map(imageMapper::mapToModel);
     }
 
-    public byte[] findById(String id) {
+    public Mono<byte[]> findById(String id) {
         return imageRepository.findById(id)
                 .map(Image::getData)
-                .orElseThrow(INVALID_IMAGE_DATA::getError);
+                .switchIfEmpty(Mono.error(INVALID_IMAGE_DATA.getError()));
     }
 }
