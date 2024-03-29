@@ -18,9 +18,9 @@ public class UserController {
         return userService.save(user);
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public UserModel getUser(@PathVariable String id){
-        return userService.findById(id);
+    @GetMapping(value = "/{email}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public UserModel getUser(@PathVariable String email){
+        return userService.findByEmail(email);
     }
 
     @PutMapping
@@ -28,8 +28,8 @@ public class UserController {
         return userService.putUser(user);
     }
 
-    @DeleteMapping(value ="{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String deleteUser(@PathVariable String id){
-        return userService.deleteById(id);
+    @DeleteMapping(value ="{email}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String deleteUser(@PathVariable String email){
+        return userService.deleteByEmail(email);
     }
 }
