@@ -9,10 +9,11 @@ import java.util.Collection;
 @Setter
 public class FacebookAuthentication implements Authentication {
 
-    private boolean authenticated = false;
+    private boolean authenticated;
     private final String userId;
     private final String accessToken;
     private String email;
+    private String name;
 
     public FacebookAuthentication(String userId, String accessToken) {
         this.userId = userId;
@@ -31,7 +32,7 @@ public class FacebookAuthentication implements Authentication {
 
     @Override
     public Object getDetails() {
-        return null;
+        return name;
     }
 
     @Override
