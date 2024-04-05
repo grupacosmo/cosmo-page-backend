@@ -82,3 +82,14 @@ components:
           type: array
           items:
             type: string
+    InternalPageSecretModel:
+      type: object
+      properties:
+        id:
+          type: string
+        secret:
+          type: string
+          format: password
+        validityPeriod:
+          type: string
+          format: date-time

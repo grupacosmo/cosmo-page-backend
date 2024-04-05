@@ -1,9 +1,9 @@
 package com.webdev.cosmo.cosmobackend.posts.controller;
 
-import com.webdev.cosmo.cosmobackend.posts.mapper.PostMapper;
-import com.webdev.cosmo.cosmobackend.posts.model.Post;
-import com.webdev.cosmo.cosmobackend.posts.repository.PostRepository;
-import com.webdev.cosmo.cosmobackend.posts.service.PostServiceImpl;
+import com.webdev.cosmo.cosmobackend.service.mapper.PostMapper;
+import com.webdev.cosmo.cosmobackend.service.api.Post;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.repository.PostRepository;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
