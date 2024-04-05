@@ -55,6 +55,18 @@ components:
       properties:
         message:
           type: string
+    FacebookUser:
+      type: object
+      properties:
+        access_token:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        id:
+          type: string
+
     ImageModel:
       type: object
       properties:
