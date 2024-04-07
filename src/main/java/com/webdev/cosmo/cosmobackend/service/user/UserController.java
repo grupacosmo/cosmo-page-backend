@@ -2,7 +2,6 @@ package com.webdev.cosmo.cosmobackend.service.user;
 
 import com.webdev.cosmo.cosmobackend.service.api.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.openapitools.model.UserModel;
 
@@ -14,21 +13,21 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public UserModel postUser(@RequestParam("user") User user){
+    public UserModel postUser(@RequestBody User user){
         return userService.save(user);
     }
 
-    @GetMapping(value = "/{email}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{email}")
     public UserModel getUser(@PathVariable String email){
         return userService.findByEmail(email);
     }
 
     @PutMapping
-    public UserModel putUser(@RequestParam("user") User user){
-        return userService.putUser(user);
+    public UserModel updateUser(@RequestBody User user){
+        return userService.updateUser(user);
     }
 
-    @DeleteMapping(value ="{email}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value ="{email}")
     public String deleteUser(@PathVariable String email){
         return userService.deleteByEmail(email);
     }

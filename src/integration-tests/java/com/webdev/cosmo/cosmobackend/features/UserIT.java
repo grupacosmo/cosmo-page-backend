@@ -47,7 +47,7 @@ public class UserIT extends BaseTestConfiguration {
         userModel.setEmail("john.doe@example.com");
         userModel.setRole(org.openapitools.model.ROLE.USER);
 
-        when(userService.putUser(any(User.class))).thenReturn(userModel);
+        when(userService.updateUser(any(User.class))).thenReturn(userModel);
 
         ResponseEntity<UserModel> response = testRestTemplate.postForEntity("/api/user?user={user}", null, UserModel.class, user);
 

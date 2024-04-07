@@ -24,5 +24,5 @@ public class User {
 
     private ROLE role;
 
-    private LocalDateTime creation_date;
+    private LocalDateTime creationDate;
 }
