@@ -8,5 +8,5 @@ public interface UserService {
      UserModel save(User user);
      UserModel findByEmail(String email);
      UserModel updateUser(User user);
-     String deleteByEmail(String email);
+     void deleteByEmail(String email);
 }

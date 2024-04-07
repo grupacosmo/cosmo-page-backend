@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.openapitools.model.UserModel;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
@@ -28,7 +31,10 @@ public class UserController {
     }
 
     @DeleteMapping(value ="{email}")
-    public String deleteUser(@PathVariable String email){
-        return userService.deleteByEmail(email);
+    public Map<String, String> deleteUser(@PathVariable String email){
+         userService.deleteByEmail(email);
+        return new HashMap<>() {{
+            put("email", email);
+        }};
     }
 }
