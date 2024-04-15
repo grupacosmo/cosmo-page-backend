@@ -1,5 +1,6 @@
-package com.webdev.cosmo.cosmobackend.service.mail;
+package com.webdev.cosmo.cosmobackend.service.internal.mail;
 
+import com.webdev.cosmo.cosmobackend.service.internal.mail.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +10,9 @@ import org.thymeleaf.context.Context;
 
 import java.util.Map;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/mail")
+@RequiredArgsConstructor
 public class MailController {
     private final EmailService emailService;
 

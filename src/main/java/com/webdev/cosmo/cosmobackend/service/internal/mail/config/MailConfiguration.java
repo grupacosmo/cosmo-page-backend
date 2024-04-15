@@ -1,10 +1,13 @@
-package com.webdev.cosmo.cosmobackend.service.mail;
+package com.webdev.cosmo.cosmobackend.service.internal.mail.config;
 
+import com.webdev.cosmo.cosmobackend.service.internal.mail.service.EmailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.util.Properties;
 
@@ -29,5 +32,24 @@ public class MailConfiguration {
         props.put("mail.debug", mailProperties.getDebug());
 
         return mailSender;
+    }
+
+    @Bean
+    public TemplateEngine templateEngine() {
+        TemplateEngine templateEngine = new SpringTemplateEngine();
+        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        templateResolver.setPrefix("templates/");
+        templateResolver.setSuffix(".html");
+        templateResolver.setTemplateMode("HTML");
+        templateEngine.setTemplateResolver(templateResolver);
+        return templateEngine;
+    }
+
+    @Bean
+    public EmailService emailService(
+            final JavaMailSender javaMailSender,
+            final TemplateEngine templateEngine
+    ) {
+        return new EmailService(javaMailSender, templateEngine);
     }
 }
