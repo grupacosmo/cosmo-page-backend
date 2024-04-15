@@ -30,3 +30,13 @@ env:
 endpoint:
   secured:
     - /user
+
+mail:
+  host: smtp.gmail.com
+  port: 587
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}
+  protocol: smtp
+  auth: true
+  starttlsEnable: true
+  debug: true

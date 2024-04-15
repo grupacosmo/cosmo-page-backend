@@ -29,16 +29,17 @@ public class AccessTokenService {
     }
 
     public String refreshToken() {
-        AccessTokenRs tokenResponse = facebookAccessTokenClient.getAccessToken(clientId, clientSecret, "client_credentials");
-
-        String token = Optional.ofNullable(tokenResponse)
-                .map(AccessTokenRs::getAccessToken)
-                .orElseThrow(() -> new RuntimeException("Cannot get token due to provider issues"));
-
-        log.info("Successfully obtained token from provider: {}", token);
-
-        this.accessToken = token;
-        return token;
+//        AccessTokenRs tokenResponse  = facebookAccessTokenClient.getAccessToken(clientId, clientSecret, "client_credentials");
+//
+//        String token = Optional.ofNullable(tokenResponse)
+//                .map(AccessTokenRs::getAccessToken)
+//                .orElseThrow(() -> new RuntimeException("Cannot get token due to provider issues"));
+//
+//        log.info("Successfully obtained token from provider: {}", token);
+//
+//        this.accessToken = token;
+//        return token;
+        return "dupa";
     }
 
 }

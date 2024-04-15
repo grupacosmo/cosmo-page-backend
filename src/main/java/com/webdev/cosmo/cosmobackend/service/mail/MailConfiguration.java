@@ -2,6 +2,7 @@ package com.webdev.cosmo.cosmobackend.service.mail;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
@@ -9,20 +10,23 @@ import java.util.Properties;
 
 @Configuration
 public class MailConfiguration {
-    @Bean
-    public JavaMailSender getJavaMailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.gmail.com");
-        mailSender.setPort(587);
 
-        mailSender.setUsername("jamr.mat@gmail.com");
-        mailSender.setPassword("");
+    @Bean
+    public JavaMailSender getJavaMailSender(
+            final MailProperties mailProperties
+    ) {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(mailProperties.getHost());
+        mailSender.setPort(mailProperties.getPort());
+
+        mailSender.setUsername(mailProperties.getUsername());
+        mailSender.setPassword(mailProperties.getPassword());
 
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "true");
+        props.put("mail.transport.protocol", mailProperties.getProtocol());
+        props.put("mail.smtp.auth", mailProperties.getAuth());
+        props.put("mail.smtp.starttls.enable", mailProperties.getStarttlsEnable());
+        props.put("mail.debug", mailProperties.getDebug());
 
         return mailSender;
     }

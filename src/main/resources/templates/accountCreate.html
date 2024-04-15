@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Account Created</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #4CAF50;
+        }
+        p {
+            color: #555;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            text-align: center;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Welcome to Our Service!</h2>
+    <p>Dear <strong th:text="${email}">[Email]</strong>,</p>
+    <p>Your account has been successfully created. We're excited to have you on board and look forward to helping you get started.</p>
+    <p>If you have any questions or need assistance, feel free to contact our support team.</p>
+    <p>Thank you for choosing us!</p>
+    <div class="footer">
+        Best Regards,<br>
+        The Team
+    </div>
+</div>
+</body>
+</html>
