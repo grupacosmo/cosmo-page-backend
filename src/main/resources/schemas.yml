@@ -94,3 +94,14 @@ components:
           type: array
           items:
             type: string
+    UserModel:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/ROLE'
+    ROLE:
+      type: integer
+      enum: [0, 1, 2]
+      x-enum-varnames: [USER, ADMIN, OWNER]

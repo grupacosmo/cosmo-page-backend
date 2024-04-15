@@ -15,7 +15,9 @@ import java.lang.reflect.Type;
 public enum Error {
     INVALID_IMAGE_DATA("Invalid image data", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST("Invalid request", HttpStatus.BAD_REQUEST),
+    INVALID_USER_DATA("Invalid user data", HttpStatus.BAD_REQUEST),
     NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED);
+
 
     private final String message;
     private final HttpStatus httpStatus;
