@@ -29,7 +29,7 @@ public class MailSenderConsumer implements Consumer<MailContext> {
     @Override
     @SneakyThrows
     public void accept(MailContext mailContext) {
-        String body = templateEngine.process(mailContext.getSubject(), buildContext(mailContext.getArgs()));
+        String body = templateEngine.process(mailContext.getTemplateName(), buildContext(mailContext.getArgs()));
         MimeMessage message = mailSender.createMimeMessage();
         buildMessageHelper(message, mailContext.getRecipient(), mailContext.getSubject(), body);
 

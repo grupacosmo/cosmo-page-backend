@@ -2,7 +2,6 @@ package com.webdev.cosmo.cosmobackend.service.internal.mail.config;
 
 import com.webdev.cosmo.cosmobackend.service.internal.mail.mapper.MailMapper;
 import com.webdev.cosmo.cosmobackend.service.internal.mail.repository.MailRepository;
-import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailExistanceValidator;
 import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailSaveService;
 import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailSenderConsumer;
 import com.webdev.cosmo.cosmobackend.util.templates.SaveService;
@@ -65,16 +64,8 @@ public class MailConfiguration {
     @Bean
     public SaveService<MailModel, MailModel> mailSaveService(
             final MailRepository mailRepository,
-            final MailMapper mailMapper,
-            final Validator<MailModel> mailExistanceValidator
+            final MailMapper mailMapper
             ) {
-        return new MailSaveService(mailRepository, mailExistanceValidator, mailMapper);
-    }
-
-    @Bean
-    public Validator<MailModel> mailExistanceValidator(
-            final MailRepository mailRepository
-    ) {
-        return new MailExistanceValidator(mailRepository);
+        return new MailSaveService(mailRepository, mailMapper);
     }
 }
