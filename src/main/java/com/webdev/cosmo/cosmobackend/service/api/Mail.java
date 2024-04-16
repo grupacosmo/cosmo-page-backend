@@ -12,11 +12,11 @@ import java.time.OffsetDateTime;
 @Data
 @Accessors(chain = true)
 public class Mail {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-
     private String recipientEmail;
-    private String action;
+    private String templateName;
     private OffsetDateTime timestamp;
 }

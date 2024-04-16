@@ -101,6 +101,18 @@ components:
           type: string
         role:
           $ref: '#/components/schemas/ROLE'
+    MailModel:
+      type: object
+      properties:
+        id:
+          type: string
+        recipientEmail:
+          type: string
+        templateName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
     ROLE:
       type: integer
       enum: [0, 1, 2]

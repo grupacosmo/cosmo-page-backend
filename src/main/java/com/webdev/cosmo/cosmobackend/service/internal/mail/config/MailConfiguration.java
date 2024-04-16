@@ -1,6 +1,13 @@
 package com.webdev.cosmo.cosmobackend.service.internal.mail.config;
 
-import com.webdev.cosmo.cosmobackend.service.internal.mail.service.EmailService;
+import com.webdev.cosmo.cosmobackend.service.internal.mail.mapper.MailMapper;
+import com.webdev.cosmo.cosmobackend.service.internal.mail.repository.MailRepository;
+import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailExistanceValidator;
+import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailSaveService;
+import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailSenderConsumer;
+import com.webdev.cosmo.cosmobackend.util.templates.SaveService;
+import com.webdev.cosmo.cosmobackend.util.templates.Validator;
+import org.openapitools.model.MailModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -35,7 +42,7 @@ public class MailConfiguration {
     }
 
     @Bean
-    public TemplateEngine templateEngine() {
+    public TemplateEngine customTemplateEngine() {
         TemplateEngine templateEngine = new SpringTemplateEngine();
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
         templateResolver.setPrefix("templates/");
@@ -46,10 +53,28 @@ public class MailConfiguration {
     }
 
     @Bean
-    public EmailService emailService(
+    public MailSenderConsumer emailService(
             final JavaMailSender javaMailSender,
-            final TemplateEngine templateEngine
+            final TemplateEngine customTemplateEngine,
+            final SaveService<MailModel, MailModel> mailSaveService,
+            final MailMapper mailMapper
     ) {
-        return new EmailService(javaMailSender, templateEngine);
+        return new MailSenderConsumer(javaMailSender, customTemplateEngine, mailSaveService, mailMapper);
+    }
+
+    @Bean
+    public SaveService<MailModel, MailModel> mailSaveService(
+            final MailRepository mailRepository,
+            final MailMapper mailMapper,
+            final Validator<MailModel> mailExistanceValidator
+            ) {
+        return new MailSaveService(mailRepository, mailExistanceValidator, mailMapper);
+    }
+
+    @Bean
+    public Validator<MailModel> mailExistanceValidator(
+            final MailRepository mailRepository
+    ) {
+        return new MailExistanceValidator(mailRepository);
     }
 }
