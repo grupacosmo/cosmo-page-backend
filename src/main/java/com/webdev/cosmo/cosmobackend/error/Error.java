@@ -16,6 +16,8 @@ public enum Error {
     INVALID_IMAGE_DATA("Invalid image data", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST("Invalid request", HttpStatus.BAD_REQUEST),
     INVALID_USER_DATA("Invalid user data", HttpStatus.BAD_REQUEST),
+    MAIL_SAVE_ERROR("Error when saving mail", HttpStatus.BAD_REQUEST),
+    MAIL_HISTORY_EXISTS_ERROR("Error when saving mail", HttpStatus.CONFLICT),
     NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED);
 
 

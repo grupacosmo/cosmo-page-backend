@@ -5,10 +5,13 @@ import com.webdev.cosmo.cosmobackend.service.common.mapper.UserMapper;
 import com.webdev.cosmo.cosmobackend.service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.UserModel;
+import org.springframework.stereotype.Service;
+
 import java.util.Optional;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_REQUEST;
 
+@Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
