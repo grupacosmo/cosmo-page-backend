@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.util.templates;
+package com.webdev.cosmo.cosmobackend.util.interfaces;
 
 
 import org.apache.commons.lang3.NotImplementedException;

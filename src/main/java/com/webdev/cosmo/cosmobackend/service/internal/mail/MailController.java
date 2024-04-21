@@ -1,12 +1,11 @@
 package com.webdev.cosmo.cosmobackend.service.internal.mail;
 
 import com.webdev.cosmo.cosmobackend.service.internal.mail.service.MailSenderConsumer;
-import com.webdev.cosmo.cosmobackend.util.templates.SaveService;
+import com.webdev.cosmo.cosmobackend.util.interfaces.SaveService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.openapitools.model.MailModel;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.context.Context;
 
 import java.util.Map;
 

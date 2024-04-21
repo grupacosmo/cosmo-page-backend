@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.service.external.facebook.async;
+package com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

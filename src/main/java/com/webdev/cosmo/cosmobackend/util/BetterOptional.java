@@ -1,6 +1,6 @@
-package com.webdev.cosmo.cosmobackend.util.util;
+package com.webdev.cosmo.cosmobackend.util;
 
-import com.webdev.cosmo.cosmobackend.util.templates.Validator;
+import com.webdev.cosmo.cosmobackend.util.interfaces.Validator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 

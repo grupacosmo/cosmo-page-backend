@@ -1,10 +1,9 @@
 package com.webdev.cosmo.cosmobackend.service.internal.mail.service;
 
-import com.webdev.cosmo.cosmobackend.service.api.Mail;
 import com.webdev.cosmo.cosmobackend.service.internal.mail.MailContext;
 import com.webdev.cosmo.cosmobackend.service.internal.mail.mapper.MailMapper;
-import com.webdev.cosmo.cosmobackend.util.templates.SaveService;
-import com.webdev.cosmo.cosmobackend.util.util.BetterOptional;
+import com.webdev.cosmo.cosmobackend.util.interfaces.SaveService;
+import com.webdev.cosmo.cosmobackend.util.BetterOptional;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
