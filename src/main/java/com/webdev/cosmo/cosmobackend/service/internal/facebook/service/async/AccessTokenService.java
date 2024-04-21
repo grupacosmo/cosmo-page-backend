@@ -1,9 +1,8 @@
-package com.webdev.cosmo.cosmobackend.service.external.facebook.async;
+package com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async;
 
-import com.webdev.cosmo.cosmobackend.service.external.facebook.external.FacebookAccessTokenClient;
+import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.model.AccessTokenRs;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
@@ -18,7 +17,7 @@ public class AccessTokenService {
     @Value("${facebook.client-secret}")
     private final String clientSecret;
 
-    private final FacebookAccessTokenClient facebookAccessTokenClient;
+    private final FacebookClient facebookClient;
 
     // Cacheable value
     private String accessToken;

@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.util.templates;
+package com.webdev.cosmo.cosmobackend.util.interfaces;
 
 public interface CrudService<RQ, RS, ID> extends SaveService<RQ, RS>,
         QueryService<RS, ID>,

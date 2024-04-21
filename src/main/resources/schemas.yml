@@ -117,3 +117,12 @@ components:
       type: integer
       enum: [0, 1, 2]
       x-enum-varnames: [USER, ADMIN, OWNER]
+
+    TokenModel:
+      type: object
+      properties:
+        token:
+          type: string
+        expiration:
+          type: string
+          format: date-time
