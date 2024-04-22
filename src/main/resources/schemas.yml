@@ -126,3 +126,47 @@ components:
         expiration:
           type: string
           format: date-time
+        pageId:
+          type: string
+
+    FacebookResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookDataItem'
+        paging:
+          $ref: '#/components/schemas/FacebookPaging'
+
+    FacebookDataItem:
+      type: object
+      properties:
+        access_token:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        created_time:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    FacebookPaging:
+      type: object
+      properties:
+        cursors:
+          $ref: '#/components/schemas/FacebookCursor'
+        next:
+          type: string
+
+    FacebookCursor:
+      type: object
+      properties:
+        before:
+          type: string
+        after:
+          type: string
+
