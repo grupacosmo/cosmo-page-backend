@@ -19,6 +19,8 @@ public enum Error {
     MAIL_SAVE_ERROR("Error when saving mail", HttpStatus.BAD_REQUEST),
     MAIL_HISTORY_EXISTS_ERROR("Error when saving mail", HttpStatus.CONFLICT),
     NO_TOKENS_FOUND("No tokens found in the database", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_ACCESS_TOKEN("Invalid access token, or insufficient permissions granted", HttpStatus.BAD_REQUEST),
+    TOKEN_SAVE_ERROR("Error during token save", HttpStatus.BAD_REQUEST),
     NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED);
 
 

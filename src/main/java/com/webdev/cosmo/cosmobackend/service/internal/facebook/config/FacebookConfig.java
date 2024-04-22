@@ -66,9 +66,10 @@ public class FacebookConfig {
     public Consumer<TokenModel> saveTokenConsumer(
             final TokenRepository tokenRepository,
             final TokenMapper tokenMapper,
-            final Cache cache
+            final Cache cache,
+            final FacebookClient client
     ) {
-        return new SaveTokenConsumer(tokenRepository, tokenMapper, cache);
+        return new SaveTokenConsumer(tokenRepository, tokenMapper, cache, client);
     }
 
     @Bean

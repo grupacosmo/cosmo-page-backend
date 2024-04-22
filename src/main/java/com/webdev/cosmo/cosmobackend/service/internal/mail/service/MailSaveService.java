@@ -22,7 +22,7 @@ public class MailSaveService implements SaveService<MailModel, MailModel> {
                 .map(mailMapper::map)
                 .peek(mail -> mail.setTimestamp(OffsetDateTime.now()))
                 .map(mailRepository::save)
-                .map(mailMapper::map)
+                .optionalMap(mailMapper::map)
                 .orElseThrow(MAIL_SAVE_ERROR::getError);
     }
 

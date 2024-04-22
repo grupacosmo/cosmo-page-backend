@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -33,10 +34,15 @@ public class BetterOptional<T> {
         return this;
     }
 
-    public Optional<T> peek(Consumer<T> action) {
+    public BetterOptional<T> peek(Consumer<T> action) {
         action.accept(base);
 
-        return Optional.of(base);
+        return BetterOptional.of(base);
+    }
+
+    public Optional<T> filter(Predicate<T> condition) {
+        return Optional.of(base)
+                .filter(condition);
     }
 
     public BetterOptional<T> verify(Supplier<Boolean> condition, RuntimeException throwable) {
