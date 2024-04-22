@@ -46,6 +46,7 @@ public class MailSenderConsumer implements Consumer<MailContext> {
     private Context buildContext(Map<String, Object> variables) {
         return BetterOptional.of(new Context())
                 .peek(c -> c.setVariables(variables))
+                .toOptional()
                 .get();
     }
 }
