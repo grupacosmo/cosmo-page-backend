@@ -10,12 +10,12 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 @RequiredArgsConstructor
 public class AccessTokenRefreshJob extends QuartzJobBean {
 
-    private final AccessTokenService accessTokenService;
+    private final Cache cache;
 
     @Override
     protected void executeInternal(@NonNull JobExecutionContext context) {
         log.info("Executing scheduled process");
-        final String token = accessTokenService.getAccessToken();
+        final String token = cache.getPageAccessToken();
         log.info("Ending scheduled process with result token: {}", token);
     }
 }

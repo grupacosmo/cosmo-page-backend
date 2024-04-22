@@ -15,6 +15,7 @@ public class Token {
     private String id;
     private String value;
     private String validityPeriod;
+    private String pageId;
 
     @ManyToOne
     private User addedBy;
