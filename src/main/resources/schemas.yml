@@ -94,6 +94,22 @@ components:
           type: array
           items:
             type: string
+
+    UpdatePostRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          x-field-extra-annotation: "
+            @jakarta.validation.constraints.NotBlank(message = \"Description is mandatory\")
+            @jakarta.validation.constraints.Size(max = 1000, message = \"Description must be less than 1000 characters\")
+          "
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageModel'
     UserModel:
       type: object
       properties:
@@ -153,6 +169,60 @@ components:
           format: date-time
         message:
           type: string
+        description:
+          type: string
+        description_tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookDescriptionTags'
+        media:
+          $ref: '#/components/schemas/FacebookPostMedia'
+        target:
+          $ref: '#/components/schemas/FacebookMediaTarget'
+        type:
+          type: string
+        url:
+          type: string
+
+
+    FacebookMediaTarget:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+
+    FacebookPostMedia:
+      type: object
+      properties:
+        image:
+          $ref: '#/components/schemas/FacebookPostImage'
+
+    FacebookPostImage:
+      type: object
+      properties:
+        height:
+          type: integer
+        width:
+          type: integer
+        src:
+          type: string
+
+    FacebookDescriptionTags:
+      type: object
+      properties:
+        id:
+          type: string
+        length:
+          type: integer
+        name:
+          type: string
+        offset:
+          type: integer
+        type:
+          type: string
+
 
     FacebookPaging:
       type: object

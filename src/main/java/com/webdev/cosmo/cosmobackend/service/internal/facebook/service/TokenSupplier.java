@@ -28,7 +28,7 @@ public class TokenSupplier implements Supplier<Token> {
                     System.out.println(tokens);
                     return tokens.get(0);
                 })
-                .get();
+                .orElse(new Token());
     }
 
     private Token getEmptyToken() {

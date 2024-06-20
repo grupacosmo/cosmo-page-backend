@@ -9,6 +9,8 @@ import org.springframework.boot.CommandLineRunner;
 
 import java.util.function.Supplier;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @RequiredArgsConstructor
 public class StartupTokenReader implements CommandLineRunner {
@@ -21,20 +23,30 @@ public class StartupTokenReader implements CommandLineRunner {
     public void run(String... args) {
         Token token = tokenSupplier.get();
 
-        // fix verification based on response
-        verifyToken(token);
+        if(isNull(token.getValue())) {
+           log.warn("No token stored, please provide valid one");
+            return;
+        }
 
-        log.info("Successfully verified token. Setting up cache.");
-        cache.setPageAccessToken(token.getValue());
-        cache.setPageId(token.getPageId());
+        // fix verification based on response
+        if(verifyToken(token)) {
+            log.info("Successfully verified token. Setting up cache.");
+            cache.setPageAccessToken(token.getValue());
+            cache.setPageId(token.getPageId());
+        } else {
+            log.error("Error during token verification. Please provide valid one.");
+        }
+
+
     }
 
-    private void verifyToken(Token token) {
+    private boolean verifyToken(Token token) {
         try {
-            facebookClient.getPostsPage(token.getPageId(), token.getValue());
+            var response = facebookClient.getPostsPage(token.getPageId(), token.getValue(), 1);
+            return true;
         } catch (Exception e) {
-            log.error("Invalid token. Please provide a valid token.");
-            // send mail here
+            e.printStackTrace();
+            return false;
         }
     }
 }

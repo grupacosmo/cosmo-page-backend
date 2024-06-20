@@ -18,6 +18,14 @@ public class BetterOptional<T> {
         return new BetterOptional<>(obj);
     }
 
+    public static <T> BetterOptional<T> fromOptional(Optional<T> obj, RuntimeException e) {
+        if(obj.isEmpty()) {
+            throw e;
+        }
+
+        return new BetterOptional<>(obj.get());
+    }
+
     public Optional<T> checkIfNotNull(Supplier<T> action, RuntimeException throwable) {
         if(action.get() == null) {
             throw throwable;

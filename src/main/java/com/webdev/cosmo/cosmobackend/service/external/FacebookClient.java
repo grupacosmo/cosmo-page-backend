@@ -25,5 +25,16 @@ public interface FacebookClient {
 
     @GetMapping("/{pageId}/feed")
     FacebookResponse getPostsPage(@PathVariable String pageId,
-                        @RequestParam("access_token") String accessToken);
+                        @RequestParam("access_token") String accessToken,
+                                  @RequestParam(name = "limit", defaultValue = "100") Integer limit);
+
+    @GetMapping("/{pageId}/feed")
+    FacebookResponse subsequentRetrieve(@PathVariable String pageId,
+                                        @RequestParam("access_token") String accessToken,
+                                        @RequestParam(name = "limit", defaultValue = "100") Integer limit,
+                                        @RequestParam("after") String after);
+
+    @GetMapping("/{postId}/attachments")
+    FacebookResponse getPostDetails(@PathVariable(name = "postId") String postId,
+                                    @RequestParam("access_token") String accessToken);
 }

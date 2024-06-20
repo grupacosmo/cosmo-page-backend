@@ -42,8 +42,8 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(INVALID_REQUEST::getError);
 
         existingPost.setTitle(post.getTitle())
-                    .setDescription(post.getDescription())
-                    .setImageIds(post.getImageIds());
+                    .setDescription(post.getDescription());
+//                    .setImageIds(post.getImageIds());
 
         Post updatedPost = repository.save(existingPost);
 

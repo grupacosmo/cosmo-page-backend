@@ -33,6 +33,7 @@ public abstract class ImageMapper {
 
     public abstract List<Image> map(List<MultipartFile> images);
     public abstract List<ImageModel> mapToModel(List<Image> images);
+    public abstract List<Image> mapToEntity(List<ImageModel> imageModels);
 
     @Named("mapUrl")
     protected String mapUrl(String id) {
@@ -40,4 +41,5 @@ public abstract class ImageMapper {
                 .concat("/api/images/")
                 .concat(id);
     }
+
 }

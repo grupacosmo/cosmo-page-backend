@@ -31,6 +31,6 @@ public class FacebookController {
 
     @GetMapping("/posts")
     public FacebookResponse smokePosts() {
-        return facebookClient.getPostsPage(cache.getPageId(), cache.getPageAccessToken());
+        return facebookClient.getPostsPage(cache.getPageId(), cache.getPageAccessToken(), 10);
     }
 }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thank You for Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #1b1b2f; /* Background color matching the website */
+            color: #ffffff; /* White text for contrast */
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #2d2d44; /* Darker background for the content area */
+        }
+        .header {
+            background-color: #30336b; /* Header color matching the website */
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #aaaaaa; /* Lighter grey for the footer text */
+        }
+        a {
+            color: #4CAF50; /* Green color for links */
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Thank You for Your Email!</h1>
+    </div>
+    <div class="content">
+        <p>Dear <span th:text="${recipientName}">[Recipient’s Name]</span>,</p>
+        <p>Thank you for reaching out to us at COSMO PK.</p>
+        <p>We have received your email and will get back to you as soon as possible. If your inquiry is urgent, please use the contact number provided on our website for immediate assistance.</p>
+        <p>We appreciate your interest and look forward to assisting you.</p>
+        <p>Best regards,</p>
+        <p><strong><span th:text="${senderName}">[Your Name]</span></strong><br/>
+            COSMO PK Team<br/>
+            Politechnika Krakowska</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 COSMO PK. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
