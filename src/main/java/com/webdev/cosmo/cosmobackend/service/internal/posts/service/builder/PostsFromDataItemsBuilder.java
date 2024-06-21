@@ -5,11 +5,10 @@ import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cac
 import com.webdev.cosmo.cosmobackend.service.internal.posts.mapper.PostMapper;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openapitools.model.FacebookDataItem;
-import org.openapitools.model.FacebookResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -24,17 +23,8 @@ public class PostsFromDataItemsBuilder implements Function<List<FacebookDataItem
     @Override
     public List<Post> apply(List<FacebookDataItem> facebookDataItems) {
         return facebookDataItems.stream()
-                .map(facebookDataItem -> facebookClient.getPostDetails(facebookDataItem.getId(), cache.getPageAccessToken()))
-                .map(FacebookResponse::getData)
-                .filter(data -> data.size() > 0 )
-                .flatMap(Collection::stream)
-                .map(this::buildPost)
+                .map(facebookDataItem -> Pair.of(facebookDataItem, facebookClient.getPostAttachments(facebookDataItem.getId(), cache.getPageAccessToken())))
+                .map(postMapper::mapPostFromFacebookData)
                 .toList();
-    }
-
-    private Post buildPost(FacebookDataItem facebookDataItem) {
-        Post post = postMapper.mapPostFromFacebookData(facebookDataItem);
-        post.setId(facebookDataItem.getId());
-        return post;
     }
 }

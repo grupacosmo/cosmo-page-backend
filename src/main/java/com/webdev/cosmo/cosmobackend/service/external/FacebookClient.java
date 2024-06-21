@@ -34,7 +34,11 @@ public interface FacebookClient {
                                         @RequestParam(name = "limit", defaultValue = "100") Integer limit,
                                         @RequestParam("after") String after);
 
-    @GetMapping("/{postId}/attachments")
+    @GetMapping("/{postId}")
     FacebookResponse getPostDetails(@PathVariable(name = "postId") String postId,
+                                    @RequestParam("access_token") String accessToken);
+
+    @GetMapping("/{postId}/attachments")
+    FacebookResponse getPostAttachments(@PathVariable(name = "postId") String postId,
                                     @RequestParam("access_token") String accessToken);
 }

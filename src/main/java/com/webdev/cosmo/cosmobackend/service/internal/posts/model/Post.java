@@ -21,6 +21,8 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    private String providerId;
+
     @Column
     private String title;
     @Column(length = 250000)

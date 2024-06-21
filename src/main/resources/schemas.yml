@@ -177,13 +177,14 @@ components:
             $ref: '#/components/schemas/FacebookDescriptionTags'
         media:
           $ref: '#/components/schemas/FacebookPostMedia'
+        subattachments:
+          $ref: '#/components/schemas/FacebookResponse'
         target:
           $ref: '#/components/schemas/FacebookMediaTarget'
         type:
           type: string
         url:
           type: string
-
 
     FacebookMediaTarget:
       type: object

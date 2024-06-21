@@ -33,4 +33,9 @@ public class FacebookController {
     public FacebookResponse smokePosts() {
         return facebookClient.getPostsPage(cache.getPageId(), cache.getPageAccessToken(), 10);
     }
+
+    @GetMapping("/posts/{id}")
+    public FacebookResponse smokePostDetails(@PathVariable String id) {
+        return facebookClient.getPostDetails(id, cache.getPageAccessToken());
+    }
 }
