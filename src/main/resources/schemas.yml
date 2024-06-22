@@ -94,6 +94,31 @@ components:
           type: array
           items:
             type: string
+    PostListQueryItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        backgroundPhoto:
+          $ref: '#/components/schemas/FacebookPostImage'
+
+    PostListQueryItemDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookPostImage'
 
     UpdatePostRequest:
       type: object

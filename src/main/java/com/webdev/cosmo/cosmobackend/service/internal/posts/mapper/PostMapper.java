@@ -3,18 +3,39 @@ package com.webdev.cosmo.cosmobackend.service.internal.posts.mapper;
 import com.webdev.cosmo.cosmobackend.service.api.FacebookImage;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import org.apache.commons.lang3.tuple.Pair;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.openapitools.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-@Mapper
+@Mapper(uses = {FacebookImageMapper.class})
 public abstract class PostMapper {
+
+    @Autowired
+    protected FacebookImageMapper facebookImageMapper;
+
     public abstract PostModel map(Post post);
     public abstract List<PostModel> map(List<Post> posts);
     public abstract Post map(PostModel postModel);
+
+    public abstract PostListQueryItem mapPostListQueryItem(Post post);
+
+    @AfterMapping
+    protected void afterMapPostListQueryItem(@MappingTarget PostListQueryItem postListQueryItem, Post post) {
+        Optional.of(post)
+                .map(Post::getFacebookImages)
+                .orElse(Collections.emptyList())
+                .stream().findFirst()
+                .map(facebookImageMapper::map)
+                .ifPresent(postListQueryItem::setBackgroundPhoto);
+    }
 
     @Mapping(source = "facebookDataItem.media.image", target = "facebookImages")
     @Mapping(source = "facebookDataItem.message", target = "description")

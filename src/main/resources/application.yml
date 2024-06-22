@@ -3,6 +3,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/cosmo_backend
     username: postgres
     password: postgres
+  jackson:
+    defaultPropertyInclusion: non_null
   jpa:
     show-sql: true
     hibernate:
