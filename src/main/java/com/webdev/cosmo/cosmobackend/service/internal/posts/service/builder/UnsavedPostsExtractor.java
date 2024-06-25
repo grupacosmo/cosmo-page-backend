@@ -14,7 +14,7 @@ public class UnsavedPostsExtractor implements BiFunction<List<FacebookDataItem>,
     @Override
     public List<FacebookDataItem> apply(List<FacebookDataItem> facebookDataItems, List<Post> posts) {
         return facebookDataItems.stream()
-                .filter(item -> posts.stream().noneMatch(post -> StringUtils.equals(item.getId(), post.getId())))
+                .filter(item -> posts.stream().noneMatch(post -> StringUtils.equals(item.getId(), post.getProviderId())))
                 .toList();
     }
 }

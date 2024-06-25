@@ -4,9 +4,11 @@ import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
 import com.webdev.cosmo.cosmobackend.util.interfaces.Executor;
 import com.webdev.cosmo.cosmobackend.util.interfaces.ListQueryService;
+import com.webdev.cosmo.cosmobackend.util.interfaces.SimpleQueryService;
 import com.webdev.cosmo.cosmobackend.util.interfaces.UpdateService;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
+import org.openapitools.model.PostListQueryItemDetails;
 import org.openapitools.model.PostModel;
 import org.openapitools.model.UpdatePostRequest;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,8 @@ public class PostController {
     private final UpdateService<UpdatePostRequest, PostModel, String> updatePostService;
     private final Executor postsSyncExecutor;
     private final ListQueryService<PostListQueryItem> postListQueryService;
+    private final SimpleQueryService<String, PostListQueryItemDetails> postDetailsQueryService;
+
 
     @PostMapping("/sync")
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -38,8 +42,8 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public PostModel getPostById(@PathVariable String postId) {
-        return service.getPostById(postId);
+    public PostListQueryItemDetails getPostById(@PathVariable String postId) {
+        return postDetailsQueryService.findBy(postId);
     }
 
     @GetMapping

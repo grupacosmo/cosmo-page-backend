@@ -27,6 +27,8 @@ public abstract class PostMapper {
 
     public abstract PostListQueryItem mapPostListQueryItem(Post post);
 
+    public abstract PostListQueryItemDetails mapPostListQueryItemDetails(Post post);
+
     @AfterMapping
     protected void afterMapPostListQueryItem(@MappingTarget PostListQueryItem postListQueryItem, Post post) {
         Optional.of(post)
@@ -35,6 +37,18 @@ public abstract class PostMapper {
                 .stream().findFirst()
                 .map(facebookImageMapper::map)
                 .ifPresent(postListQueryItem::setBackgroundPhoto);
+    }
+
+    @AfterMapping
+    protected void afterMapPostListQueryItem(@MappingTarget PostListQueryItemDetails postListQueryItemDetails, Post post) {
+        var postsImages = Optional.of(post)
+                .map(Post::getFacebookImages)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(facebookImageMapper::map)
+                .toList();
+
+        postListQueryItemDetails.setImages(postsImages);
     }
 
     @Mapping(source = "facebookDataItem.media.image", target = "facebookImages")
