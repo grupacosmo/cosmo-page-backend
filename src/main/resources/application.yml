@@ -28,6 +28,7 @@ images:
 
 env:
   url: http://localhost:8080
+  api-keys: VERY_SECURED_KEY
 
 endpoint:
   secured:

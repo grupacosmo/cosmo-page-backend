@@ -1,7 +1,7 @@
 package com.webdev.cosmo.cosmobackend.config;
 
 import com.webdev.cosmo.cosmobackend.config.properties.EndpointConfig;
-import com.webdev.cosmo.cosmobackend.security.CustomAuthenticationFilter;
+import com.webdev.cosmo.cosmobackend.security.UserAuthenticationFilter;
 import com.webdev.cosmo.cosmobackend.security.CustomAuthenticationManager;
 import com.webdev.cosmo.cosmobackend.security.CustomAuthenticationProvider;
 import com.webdev.cosmo.cosmobackend.security.mapper.FacebookAuthenticationMapper;
@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     @Bean
     OncePerRequestFilter customAuthenticationFilter(final EndpointConfig endpointConfig, final AuthenticationManager customAuthenticationManager) {
-        return new CustomAuthenticationFilter(endpointConfig, customAuthenticationManager);
+        return new UserAuthenticationFilter(endpointConfig, customAuthenticationManager);
     }
 
     @Bean
@@ -44,7 +44,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, OncePerRequestFilter customAuthenticationFilter, EndpointConfig endpointConfig) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           OncePerRequestFilter customAuthenticationFilter,
+                                           EndpointConfig endpointConfig) throws Exception {
         http
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(endpointConfig.getSecured().toArray(String[]::new)).authenticated()

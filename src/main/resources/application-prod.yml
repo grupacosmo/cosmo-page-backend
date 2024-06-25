@@ -25,3 +25,4 @@ images:
 
 env:
   url: ${PROD_URL}
+  api-keys: ${API_KEYS}

@@ -22,7 +22,7 @@ import static java.util.Objects.isNull;
 
 
 @RequiredArgsConstructor
-public class CustomAuthenticationFilter extends OncePerRequestFilter {
+public class UserAuthenticationFilter extends OncePerRequestFilter {
 
     private final EndpointConfig endpointConfig;
 

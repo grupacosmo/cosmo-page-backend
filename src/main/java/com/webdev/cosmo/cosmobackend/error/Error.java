@@ -24,7 +24,8 @@ public enum Error {
     INVALID_ACCESS_TOKEN("Invalid access token, or insufficient permissions granted", HttpStatus.BAD_REQUEST),
     INVALID_CACHE_DATA("Invalid cache data, please validate it.", HttpStatus.INTERNAL_SERVER_ERROR),
     TOKEN_SAVE_ERROR("Error during token save", HttpStatus.BAD_REQUEST),
-    NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED);
+    NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED),
+    INVALID_API_KEY("Invalid api key", HttpStatus.UNAUTHORIZED);
 
 
     private final String message;
