@@ -2,15 +2,13 @@ package com.webdev.cosmo.cosmobackend.service.internal.posts;
 
 import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
-import com.webdev.cosmo.cosmobackend.util.interfaces.Executor;
-import com.webdev.cosmo.cosmobackend.util.interfaces.ListQueryService;
-import com.webdev.cosmo.cosmobackend.util.interfaces.SimpleQueryService;
-import com.webdev.cosmo.cosmobackend.util.interfaces.UpdateService;
+import com.webdev.cosmo.cosmobackend.util.interfaces.*;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
 import org.openapitools.model.PostListQueryItemDetails;
 import org.openapitools.model.PostModel;
 import org.openapitools.model.UpdatePostRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api/posts")
+@RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
     private final PostService service;
     private final UpdateService<UpdatePostRequest, PostModel, String> updatePostService;
     private final Executor postsSyncExecutor;
-    private final ListQueryService<PostListQueryItem> postListQueryService;
+    private final PageableQueryService<PostListQueryItem> pageablePostsService;
     private final SimpleQueryService<String, PostListQueryItemDetails> postDetailsQueryService;
 
 
@@ -47,8 +45,8 @@ public class PostController {
     }
 
     @GetMapping
-    public List<PostListQueryItem> getAllPosts() {
-        return postListQueryService.findAll();
+    public Page<PostListQueryItem> getAllPosts(@RequestParam int page, @RequestParam int size) {
+        return pageablePostsService.findAll(page, size);
     }
 
     @PutMapping("/{postId}")
