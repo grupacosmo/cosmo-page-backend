@@ -23,6 +23,6 @@ WORKDIR /app
 
 RUN chown -R cosmopk:cosmo /app
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD java $JAVA_OPTS -jar backend.jar
