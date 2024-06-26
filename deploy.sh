@@ -13,7 +13,7 @@ if [ "\$(docker ps -qa -f name=\$CONTAINER_NAME)" ]; then
     fi
 fi
 
-docker run -d --rm -p 8080:8080 --name \$CONTAINER_NAME --network bridge cosmopk/cosmo-backend:latest
+docker run -d --rm -p 8080:8080 --env-file /cosmo/.env-prod --name \$CONTAINER_NAME --network bridge cosmopk/cosmo-backend:latest
 
 exit
 ENDSSH
