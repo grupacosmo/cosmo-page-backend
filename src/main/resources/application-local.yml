@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cosmo_backend
+    username: postgres
+    password: postgres
+  jackson:
+    defaultPropertyInclusion: non_null
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+images:
+  types:
+    - png
+    - jpg
+    - jpeg
+
+env:
+  url: http://localhost:8080
+  api-keys: VERY_SECURED_KEY

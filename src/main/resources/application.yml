@@ -1,34 +1,16 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/cosmo_backend
-    username: postgres
-    password: postgres
   jackson:
     defaultPropertyInclusion: non_null
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
-  profiles:
-    active:
-      local
-
-facebook:
-  emulator:
-    enabled: true
-  sample-token: dupa123
-  client-id: ${CLIENT_ID}
-  client-secret: ${CLIENT_SECRET}
 
 images:
   types:
     - png
     - jpg
     - jpeg
-
-env:
-  url: http://localhost:8080
-  api-keys: VERY_SECURED_KEY
 
 endpoint:
   secured:
