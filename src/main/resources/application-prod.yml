@@ -5,10 +5,7 @@ spring:
     password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate
-  profiles:
-    active:
-      prod
+      ddl-auto: update
 
 facebook:
   emulator:
