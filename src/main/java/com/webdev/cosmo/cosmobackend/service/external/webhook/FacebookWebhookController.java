@@ -33,4 +33,9 @@ public class FacebookWebhookController {
 
         return notifStrategy.run(notifContext);
     }
+
+    @PostMapping("/api/facebook/notif")
+    public void sampleWebhookTest(@RequestBody String body) {
+        log.info(body);
+    }
 }
