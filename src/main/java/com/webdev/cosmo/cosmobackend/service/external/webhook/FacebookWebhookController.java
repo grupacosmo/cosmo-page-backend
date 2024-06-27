@@ -6,10 +6,7 @@ import com.webdev.cosmo.cosmobackend.service.external.webhook.models.NotifStrate
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -25,11 +22,13 @@ public class FacebookWebhookController {
     public Integer triggerNotif(
             @RequestParam("hub.mode") String subscribe,
             @RequestParam("hub.challenge") int challenge,
-            @RequestParam("hub.verify_token") String verifyToken
+            @RequestParam("hub.verify_token") String verifyToken,
+            @RequestBody String body
     ) {
         log.info(verifyToken);
         log.info(String.valueOf(challenge));
         log.info(subscribe);
+        log.info(body);
         notifContext.setNotifStrategyRecord(NotifStrategyRecord.init(verifyToken, challenge, subscribe));
 
         return notifStrategy.run(notifContext);
