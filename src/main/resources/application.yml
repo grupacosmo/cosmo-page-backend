@@ -29,3 +29,7 @@ mail:
   auth: true
   starttlsEnable: true
   debug: true
+
+logging:
+  level:
+    .: DEBUG
