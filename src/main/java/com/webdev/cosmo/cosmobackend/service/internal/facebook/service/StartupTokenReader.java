@@ -1,7 +1,7 @@
 package com.webdev.cosmo.cosmobackend.service.internal.facebook.service;
 
 import com.webdev.cosmo.cosmobackend.service.api.Token;
-import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

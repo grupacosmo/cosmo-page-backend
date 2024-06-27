@@ -1,7 +1,7 @@
 package com.webdev.cosmo.cosmobackend.security;
 
 import com.webdev.cosmo.cosmobackend.security.mapper.FacebookAuthenticationMapper;
-import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import feign.FeignException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

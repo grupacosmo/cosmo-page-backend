@@ -1,11 +1,9 @@
-package com.webdev.cosmo.cosmobackend.config;
+package com.webdev.cosmo.cosmobackend.security;
 
-import com.webdev.cosmo.cosmobackend.config.properties.EndpointConfig;
-import com.webdev.cosmo.cosmobackend.security.UserAuthenticationFilter;
-import com.webdev.cosmo.cosmobackend.security.CustomAuthenticationManager;
-import com.webdev.cosmo.cosmobackend.security.CustomAuthenticationProvider;
+import com.webdev.cosmo.cosmobackend.config.EndpointConfig;
+import com.webdev.cosmo.cosmobackend.security.filters.UserAuthenticationFilter;
 import com.webdev.cosmo.cosmobackend.security.mapper.FacebookAuthenticationMapper;
-import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

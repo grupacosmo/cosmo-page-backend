@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.service.external;
+package com.webdev.cosmo.cosmobackend.service.common;
 
 import org.openapitools.model.AccessTokenRs;
 import org.openapitools.model.FacebookResponse;

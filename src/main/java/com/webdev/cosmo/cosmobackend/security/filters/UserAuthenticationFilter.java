@@ -1,9 +1,10 @@
-package com.webdev.cosmo.cosmobackend.security;
+package com.webdev.cosmo.cosmobackend.security.filters;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.webdev.cosmo.cosmobackend.config.properties.EndpointConfig;
+import com.webdev.cosmo.cosmobackend.config.EndpointConfig;
 import com.webdev.cosmo.cosmobackend.error.Error;
+import com.webdev.cosmo.cosmobackend.security.FacebookAuthentication;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

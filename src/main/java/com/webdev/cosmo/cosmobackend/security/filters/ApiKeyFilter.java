@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.security;
+package com.webdev.cosmo.cosmobackend.security.filters;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,9 +13,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.function.Predicate;
-
-import static java.util.Objects.isNull;
 
 @Component
 @RequiredArgsConstructor
@@ -23,11 +22,15 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     private final Predicate<String> apiKeyValidator;
 
+    private static final List<String> PATHS_TO_BE_SKIPPED = List.of(
+            "/api/facebook/notif"
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String apiKey = request.getHeader("apiKey");
 
-        if(apiKeyValidator.negate().test(apiKey)){
+        if(!PATHS_TO_BE_SKIPPED.contains(request.getRequestURI()) && apiKeyValidator.negate().test(apiKey)){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             Error errorResponse = Error.INVALID_API_KEY;

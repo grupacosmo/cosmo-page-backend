@@ -1,6 +1,6 @@
 package com.webdev.cosmo.cosmobackend.service.internal.facebook;
 
-import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.FacebookResponse;

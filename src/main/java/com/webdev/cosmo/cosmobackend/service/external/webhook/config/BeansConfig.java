@@ -1,9 +1,9 @@
-package com.webdev.cosmo.cosmobackend.service.external.notif.config;
+package com.webdev.cosmo.cosmobackend.service.external.webhook.config;
 
-import com.webdev.cosmo.cosmobackend.service.external.notif.NotifContext;
-import com.webdev.cosmo.cosmobackend.service.external.notif.NotifStrategy;
-import com.webdev.cosmo.cosmobackend.service.external.notif.Strategy;
-import com.webdev.cosmo.cosmobackend.service.external.notif.validators.TokenValidator;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.NotifContext;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.NotifStrategy;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.Strategy;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.validators.TokenValidator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,10 +30,10 @@ public class BeansConfig {
 
     @Bean("notifValidators")
     public List<Consumer<NotifContext>> notifValidators(
-            @Value("facebook.sample-token") final String tokenFromProps
+            @Value("${facebook.notif-token}") final String tokenFromProps
     ) {
         return List.of(
-                new TokenValidator("dupa123")
+                new TokenValidator(tokenFromProps)
         );
     }
 }

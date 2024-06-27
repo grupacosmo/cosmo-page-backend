@@ -11,6 +11,10 @@ images:
     - png
     - jpg
     - jpeg
+    -
+facebook:
+  emulator:
+    enabled: true
 
 endpoint:
   secured:

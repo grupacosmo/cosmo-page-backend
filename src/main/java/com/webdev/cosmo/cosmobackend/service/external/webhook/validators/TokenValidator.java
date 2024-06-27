@@ -1,6 +1,6 @@
-package com.webdev.cosmo.cosmobackend.service.external.notif.validators;
+package com.webdev.cosmo.cosmobackend.service.external.webhook.validators;
 
-import com.webdev.cosmo.cosmobackend.service.external.notif.NotifContext;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.NotifContext;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;

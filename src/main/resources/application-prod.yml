@@ -10,7 +10,7 @@ spring:
 facebook:
   emulator:
     enabled: false
-  sample-token: ${FB_TOKEN}
+  notif-token: ${FB_TOKEN}
   client-id: ${CLIENT_ID}
   client-secret: ${CLIENT_SECRET}
 

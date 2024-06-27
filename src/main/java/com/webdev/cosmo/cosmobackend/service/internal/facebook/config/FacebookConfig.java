@@ -8,14 +8,12 @@ import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.StartupTo
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.TokenSupplier;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.AccessTokenRefreshJob;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
-import com.webdev.cosmo.cosmobackend.service.external.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import org.openapitools.model.TokenModel;
 import org.quartz.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;

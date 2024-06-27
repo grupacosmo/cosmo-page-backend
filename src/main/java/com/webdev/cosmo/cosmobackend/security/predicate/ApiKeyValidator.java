@@ -1,4 +1,4 @@
-package com.webdev.cosmo.cosmobackend.security;
+package com.webdev.cosmo.cosmobackend.security.predicate;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

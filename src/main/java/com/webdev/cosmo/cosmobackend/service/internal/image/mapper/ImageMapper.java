@@ -1,8 +1,7 @@
 package com.webdev.cosmo.cosmobackend.service.internal.image.mapper;
 
-import com.webdev.cosmo.cosmobackend.config.properties.EnvConfig;
+import com.webdev.cosmo.cosmobackend.config.EnvConfig;
 import com.webdev.cosmo.cosmobackend.service.api.Image;
-import lombok.SneakyThrows;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

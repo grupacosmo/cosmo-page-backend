@@ -1,6 +1,6 @@
-package com.webdev.cosmo.cosmobackend.service.external.notif;
+package com.webdev.cosmo.cosmobackend.service.external.webhook;
 
-import com.webdev.cosmo.cosmobackend.service.external.notif.models.NotifStrategyRecord;
+import com.webdev.cosmo.cosmobackend.service.external.webhook.models.NotifStrategyRecord;
 import lombok.Setter;
 
 public class NotifContext implements TokenFromRequestProvider, ChallengeTokenProvider {
