@@ -32,4 +32,8 @@ mail:
 
 logging:
   level:
-    .: DEBUG
+    org:
+      springframework:
+        web:
+          filter:
+            CommonsRequestLoggingFilter: DEBUG
