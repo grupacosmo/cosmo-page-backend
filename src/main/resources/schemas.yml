@@ -67,6 +67,58 @@ components:
         id:
           type: string
 
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: integer
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Change'
+
+    Change:
+      type: object
+      properties:
+        field:
+          type: string
+        value:
+          $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      properties:
+        item:
+          type: string
+        post_id:
+          type: string
+        verb:
+          type: string
+        published:
+          type: integer
+        created_time:
+          type: integer
+        message:
+          type: string
+        from:
+          $ref: '#/components/schemas/From'
+    From:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+    WebhookNotification:
+      type: object
+      properties:
+        entry:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+        object:
+          type: string
     ImageModel:
       type: object
       properties:
@@ -156,8 +208,8 @@ components:
           format: date-time
     ROLE:
       type: integer
-      enum: [0, 1, 2]
-      x-enum-varnames: [USER, ADMIN, OWNER]
+      enum: [ 0, 1, 2 ]
+      x-enum-varnames: [ USER, ADMIN, OWNER ]
 
     TokenModel:
       type: object

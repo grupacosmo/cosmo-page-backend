@@ -6,7 +6,10 @@ import com.webdev.cosmo.cosmobackend.service.external.webhook.models.NotifStrate
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.model.WebhookNotification;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.function.Consumer;
 
 @Slf4j
 @RestController
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class FacebookWebhookController {
     private final Strategy<Integer, NotifContext> notifStrategy;
+    private final Consumer<WebhookNotification> webhookNotificationConsumer;
 
     @Resource(name = "notifContext")
     private NotifContext notifContext;
@@ -33,7 +37,7 @@ public class FacebookWebhookController {
     }
 
     @PostMapping("/api/facebook/notif")
-    public void sampleWebhookTest(@RequestBody String body) {
-        log.info(body);
+    public void sampleWebhookTest(@RequestBody WebhookNotification body) {
+        webhookNotificationConsumer.accept(body);
     }
 }
