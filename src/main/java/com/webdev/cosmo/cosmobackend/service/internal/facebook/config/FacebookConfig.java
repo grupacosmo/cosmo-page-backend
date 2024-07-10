@@ -11,6 +11,7 @@ import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cac
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import org.openapitools.model.TokenModel;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,12 +63,14 @@ public class FacebookConfig {
 
     @Bean
     public Consumer<TokenModel> saveTokenConsumer(
+            @Value("${facebook.client-id}") final String clientId,
+            @Value("${facebook.client-secret}") final String clientSecret,
             final TokenRepository tokenRepository,
             final TokenMapper tokenMapper,
             final Cache cache,
             final FacebookClient client
     ) {
-        return new SaveTokenConsumer(tokenRepository, tokenMapper, cache, client);
+        return new SaveTokenConsumer(clientId, clientSecret, tokenRepository, tokenMapper, cache, client);
     }
 
     @Bean

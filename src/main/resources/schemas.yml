@@ -133,6 +133,15 @@ components:
           type: string
         access_token:
           type: string
+    LongLivedAccessToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
     PostModel:
       type: object
       properties:

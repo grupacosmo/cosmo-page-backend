@@ -3,6 +3,7 @@ package com.webdev.cosmo.cosmobackend.service.common;
 import org.openapitools.model.AccessTokenRs;
 import org.openapitools.model.FacebookResponse;
 import org.openapitools.model.FacebookUser;
+import org.openapitools.model.LongLivedAccessToken;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,12 @@ public interface FacebookClient {
     AccessTokenRs getAccessToken(@RequestParam("client_id") String clientId,
                                  @RequestParam("client_secret") String clientSecret,
                                  @RequestParam("grant_type") String grantType);
+
+    @GetMapping(path = "/oauth/access_token")
+    LongLivedAccessToken getLongLivedToken(@RequestParam("client_id") String clientId,
+                                           @RequestParam("client_secret") String clientSecret,
+                                           @RequestParam("grant_type") String grantType,
+                                           @RequestParam("fb_exchange_token") String fbExchangeToken);
 
     @GetMapping(path = "/{user-id}")
     FacebookUser verifyToken(@PathVariable("user-id") String userId,
