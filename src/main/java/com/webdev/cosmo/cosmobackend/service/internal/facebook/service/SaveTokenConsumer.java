@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openapitools.model.FacebookResponse;
+import org.openapitools.model.LongLivedAccessToken;
 import org.openapitools.model.TokenModel;
 
 import java.util.List;
@@ -24,6 +25,9 @@ import static com.webdev.cosmo.cosmobackend.error.Error.TOKEN_SAVE_ERROR;
 public class SaveTokenConsumer implements Consumer<TokenModel> {
 
     private static final String COSMO_PK_PAGE = "COSMO PK";
+    private static final String EXCHANGE_TOKEN_GRANT_TYPE = "fb_exchange_token";
+    private final String clientId;
+    private final String clientSecret;
     private final TokenRepository tokenRepository;
     private final TokenMapper tokenMapper;
     private final Cache cache;
@@ -33,6 +37,13 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
     public void accept(TokenModel tokenModel) {
         Pair<String, String> pageIdPageTokenPair = retrievePageAccessToken(tokenModel.getToken());
 
+        LongLivedAccessToken longLivedToken = facebookClient.getLongLivedToken(
+                clientId,
+                clientSecret,
+                EXCHANGE_TOKEN_GRANT_TYPE,
+                pageIdPageTokenPair.getRight()
+        );
+
         List<Token> existingTokens = tokenRepository.findAll();
 
         tokenRepository.deleteAll();
@@ -40,8 +51,9 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
 
         BetterOptional.of(tokenModel)
                 .peek(model -> model.setPageId(pageIdPageTokenPair.getLeft()))
-                .peek(model -> model.setToken(pageIdPageTokenPair.getRight()))
+                .peek(model -> model.setToken(longLivedToken.getAccessToken()))
                 .optionalMap(tokenMapper::map)
+                .map(token -> token.setValidityPeriod(longLivedToken.getExpiresIn().toString()))
                 .map(tokenRepository::save)
                 .orElseThrow(TOKEN_SAVE_ERROR::getError);
 
