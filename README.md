@@ -6,6 +6,10 @@ Contains an implementation for an API service used by cosmo-page infrastructure.
 
 Before deploying the Spring Boot application, ensure that you have the following prerequisites installed and configured on your deployment environment:
 
+![](./docs/high-level-design.png)
+
+![](./docs/detailed-design.png)
+
 ## Prerequisites
 
 - Java JDK 20+(Spring Boot 3.1.4+)
