@@ -1,0 +1,555 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI document of cosmo-page-backend
+  description: cosmo-page-backend Open API documentation
+  version: "1.0"
+
+tags:
+  - name: FacebookResource
+    description: Contains all endpoints related to operations on with Facebook based content.
+  - name: ImageResource
+    description: Contains all endpoints related to image management.
+  - name: MailResource
+    description: Contains all endpoints related to mailing list.
+  - name: PostsResource
+    description: Contains all endpoints related to posts management.
+
+paths:
+  /api/facebook/token:
+    post:
+      tags:
+        - FacebookResource
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: A token creation application.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenModel"
+      responses:
+        201:
+          description: A token was successfully created.
+  /api/facebook/accounts:
+    get:
+      tags:
+        - FacebookResource
+      parameters:
+        - in: query
+          name: accessToken
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A list of user information retrieved from external Facebook API.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /api/facebook/posts:
+    get:
+      tags:
+        - FacebookResource
+      responses:
+        200:
+          description: A list of user posts retrieved from external Facebook API.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /api/facebook/posts/details:
+    get:
+      tags:
+        - FacebookResource
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: A list of user post details retrieved from external Facebook API.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /api/images/uploadImage:
+    post:
+      tags:
+        - ImageResource
+      parameters:
+        - in: query
+          name: images
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: A list of images to be uploaded
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        200:
+          description: An image was successfully uploaded.
+  /api/images:
+    get:
+      tags:
+        - ImageResource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A retrieved image, which was previously uploaded.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /api/mail/save:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailModel'
+      responses:
+        '200':
+          description: A successful mail sent response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailModel'
+  /api/mail/smoke:
+    get:
+      responses:
+        200:
+          description: A mail was sent successfully.
+  /api/posts/sync:
+    post:
+      responses:
+        201:
+          description: Sync request was accepted.
+  /api/posts:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      responses:
+        201:
+          description: A post was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostModel'
+    get:
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: A paginated list of posts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PostListQueryItem'
+                  totalElements:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  size:
+                    type: integer
+                  number:
+                    type: integer
+  /api/posts/{postId}:
+    get:
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A lis of post details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostListQueryItemDetails'
+    put:
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePostRequest'
+      responses:
+        200:
+          description: A post was updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostModel'
+    delete:
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A post was deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+components:
+  schemas:
+    TokenModel:
+      type: object
+      properties:
+        token:
+          type: string
+        expiration:
+          type: string
+          format: date-time
+        pageId:
+          type: string
+      required:
+        - token
+        - expiration
+        - pageId
+    FacebookResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookDataItem'
+        paging:
+          $ref: '#/components/schemas/FacebookPaging'
+      required:
+        - data
+        - paging
+    FacebookDataItem:
+      type: object
+      properties:
+        access_token:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        created_time:
+          type: string
+          format: date-time
+        message:
+          type: string
+        description:
+          type: string
+        description_tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookDescriptionTags'
+        media:
+          $ref: '#/components/schemas/FacebookPostMedia'
+        subattachments:
+          $ref: '#/components/schemas/FacebookResponse'
+        target:
+          $ref: '#/components/schemas/FacebookMediaTarget'
+        type:
+          type: string
+        url:
+          type: string
+      required:
+        - access_token
+        - id
+        - name
+        - created_time
+        - message
+        - description
+        - description_tags
+        - media
+        - subattachments
+        - target
+        - type
+        - url
+    FacebookPaging:
+      type: object
+      properties:
+        cursors:
+          $ref: '#/components/schemas/FacebookCursor'
+        next:
+          type: string
+      required:
+        - cursors
+        - next
+    FacebookDescriptionTags:
+      type: object
+      properties:
+        id:
+          type: string
+        length:
+          type: integer
+        name:
+          type: string
+        offset:
+          type: integer
+        type:
+          type: string
+      required:
+        - id
+        - length
+        - name
+        - offset
+        - type
+    FacebookPostMedia:
+      type: object
+      properties:
+        image:
+          $ref: '#/components/schemas/FacebookPostImage'
+      required:
+        - image
+    FacebookMediaTarget:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+      required:
+        - id
+        - url
+    FacebookCursor:
+      type: object
+      properties:
+        before:
+          type: string
+        after:
+          type: string
+      required:
+        - before
+        - after
+    FacebookPostImage:
+      type: object
+      properties:
+        height:
+          type: integer
+        width:
+          type: integer
+        src:
+          type: string
+      required:
+        - height
+        - width
+        - src
+    MailModel:
+      type: object
+      properties:
+        id:
+          type: string
+        recipientEmail:
+          type: string
+        templateName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - recipientEmail
+        - templateName
+        - timestamp
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          maxLength: 250000
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        facebookImages:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookImage'
+      required:
+        - id
+        - providerId
+        - title
+        - description
+        - images
+        - facebookImages
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        data:
+          type: string
+          format: byte
+      required:
+        - id
+        - name
+        - type
+        - data
+    FacebookImage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        height:
+          type: integer
+          format: int32
+        width:
+          type: integer
+          format: int32
+        src:
+          type: string
+          maxLength: 250000
+      required:
+        - id
+        - height
+        - width
+        - src
+    PostModel:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        imageIds:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - title
+        - description
+        - imageIds
+    PostListQueryItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        backgroundPhoto:
+          $ref: '#/components/schemas/FacebookPostImage'
+      required:
+        - id
+        - title
+        - description
+        - backgroundPhoto
+    PostListQueryItemDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacebookPostImage'
+      required:
+        - id
+        - title
+        - description
+        - images
+    UpdatePostRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          x-field-extra-annotation: "
+            @jakarta.validation.constraints.NotBlank(message = \"Description is mandatory\")
+            @jakarta.validation.constraints.Size(max = 1000, message = \"Description must be less than 1000 characters\")
+          "
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageModel'
+      required:
+        - title
+        - description
+        - images
+    ImageModel:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+      required:
+        - id
+        - url
