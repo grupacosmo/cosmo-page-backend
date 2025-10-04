@@ -26,10 +26,10 @@ public class PostsSyncExecutor implements Executor {
     @Override
     public void execute() {
         List<FacebookDataItem> facebookDataItems = facebookDataItemProvider.get();
-
-        log.info("Successfully obtained {} items from facebook.", facebookDataItems.size());
         List<FacebookDataItem> facebookDataItemsToBeAdded = unsavedPostsExtractor.apply(facebookDataItems, postRepository.findAll());
-        postRepository.saveAll(postsFromDataItemsBuilder.apply(facebookDataItemsToBeAdded));
-//        log.info("Added ");
+        List<Post> postsToSave = postsFromDataItemsBuilder.apply(facebookDataItemsToBeAdded);
+
+        postRepository.saveAll(postsToSave);
     }
+
 }

@@ -2,6 +2,8 @@ package com.webdev.cosmo.cosmobackend.service.internal.posts.mapper;
 
 import com.webdev.cosmo.cosmobackend.service.api.FacebookImage;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.repository.PostRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
@@ -14,8 +16,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-@Mapper(uses = {FacebookImageMapper.class})
+@Slf4j
+@Mapper(componentModel = "spring", uses = {FacebookImageMapper.class})
 public abstract class PostMapper {
 
     @Autowired
@@ -26,7 +32,6 @@ public abstract class PostMapper {
     public abstract Post map(PostModel postModel);
 
     public abstract PostListQueryItem mapPostListQueryItem(Post post);
-
     public abstract PostListQueryItemDetails mapPostListQueryItemDetails(Post post);
 
     @AfterMapping
@@ -66,34 +71,49 @@ public abstract class PostMapper {
                 .setHeight(value.getHeight()));
     }
 
-    public Post mapPostFromFacebookData(Pair<FacebookDataItem, FacebookResponse> facebookResponseFacebookResponsePair) {
-        var facebookPostData = facebookResponseFacebookResponsePair.getLeft();
-        var facebookAttachments = facebookResponseFacebookResponsePair.getRight();
+    public Post mapPostFromFacebookData(Pair<FacebookDataItem, FacebookResponse> fbPair, Post post) {
+        FacebookDataItem facebookPostData = fbPair.getLeft();
+        FacebookResponse facebookAttachments = fbPair.getRight();
 
-        Post post = this.mapPostFromFacebookData(facebookPostData);
 
-        if(facebookAttachments.getData().size() < 1) {
-            return post;
+        if(facebookPostData.getMessage() != null) {
+            post.setDescription(facebookPostData.getMessage());
         }
 
-        if( facebookAttachments.getData().get(0).getSubattachments() == null) {
-
-            if(facebookAttachments.getData().get(0).getMedia() != null) {
-                return post.setFacebookImages(map(facebookAttachments.getData().get(0).getMedia().getImage()));
+        if (facebookAttachments.getData() == null || facebookAttachments.getData().isEmpty()) {
+            if(!post.getFacebookImages().isEmpty()){
+                post.getFacebookImages().clear();
             }
-
             return post;
         }
 
-        var images = facebookAttachments.getData().get(0)
-                .getSubattachments()
-                .getData().stream()
-                .map(FacebookDataItem::getMedia)
-                .map(FacebookPostMedia::getImage)
-                .map(this::map)
-                .flatMap(Collection::stream)
-                .toList();
+        var firstAttachment = facebookAttachments.getData().get(0);
 
-        return  post.setFacebookImages(images);
+        if (firstAttachment.getSubattachments() == null) {
+            if (firstAttachment.getMedia() != null) {
+                List<FacebookImage> images = map(firstAttachment.getMedia().getImage());
+                post.getFacebookImages().clear();
+                post.getFacebookImages().addAll(images);
+            }
+            return post;
+        }
+
+        List<FacebookImage> images = Stream.concat(
+                firstAttachment.getMedia() != null
+                        ? map(firstAttachment.getMedia().getImage()).stream()
+                        : Stream.empty(),
+                firstAttachment.getSubattachments() != null
+                        ? firstAttachment.getSubattachments().getData().stream()
+                        .map(FacebookDataItem::getMedia)
+                        .map(FacebookPostMedia::getImage)
+                        .map(this::map)
+                        .flatMap(Collection::stream)
+                        : Stream.empty()
+        ).collect(Collectors.toCollection(ArrayList::new));
+
+        post.getFacebookImages().clear();
+        post.getFacebookImages().addAll(images);
+
+        return post;
     }
 }
