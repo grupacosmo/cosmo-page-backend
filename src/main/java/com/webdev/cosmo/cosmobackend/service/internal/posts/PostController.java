@@ -3,6 +3,7 @@ package com.webdev.cosmo.cosmobackend.service.internal.posts;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
 import com.webdev.cosmo.cosmobackend.util.interfaces.*;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
 import org.openapitools.model.PostListQueryItemDetails;
@@ -13,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,7 +27,7 @@ public class PostController {
     private final SimpleQueryService<String, PostListQueryItemDetails> postDetailsQueryService;
 
 
-    @PostMapping("/sync")
+    @PutMapping("/sync")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void syncPostsWithFacebook() {
         postsSyncExecutor.execute();
@@ -40,6 +40,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
+    @Transactional(readOnly = true)
     public PostListQueryItemDetails getPostById(@PathVariable String postId) {
         return postDetailsQueryService.findBy(postId);
     }

@@ -6,8 +6,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import org.openapitools.model.FacebookPostImage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Accessors(chain = true)
@@ -32,7 +32,19 @@ public class Post {
     @Column
     private List<Image> images;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @Column
-    private List<FacebookImage> facebookImages;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+            name = "posts_facebook_images",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "facebook_images_id")
+    )
+    private List<FacebookImage> facebookImages = new ArrayList<>();
+
+    public List<FacebookImage> getFacebookImages() {
+        if (facebookImages == null) {
+            facebookImages = new ArrayList<>();
+        }
+        return facebookImages;
+    }
+
 }
