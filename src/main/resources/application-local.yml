@@ -16,6 +16,10 @@ images:
     - jpg
     - jpeg
 
+facebook:
+  emulator:
+    enabled: true
+
 env:
   url: http://localhost:8080
-  api-keys: VERY_SECURED_KEY
+  api-keys: local-dev-key
