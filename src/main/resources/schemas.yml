@@ -2,59 +2,676 @@ openapi: 3.0.3
 info:
   title: Cosmo page backend
   description: |-
-    A simple banking API that allows two operations:
-    - get account balance given account number
-    - deposit amount to a account
-  version: 1.0-SNAPSHOT
+    Backend API for the cosmo-page infrastructure.
+    All endpoints (except webhook handshake, user privacy pages and actuator health)
+    are protected by the `apiKey` header.
+  version: 1.0.0
 servers:
-  - url: http://localhost:808/api
+  - url: http://localhost:8080/api
+
 tags:
+  - name: posts
+    description: Posts management operations
+  - name: facebook
+    description: Facebook integration operations
   - name: images
-    description: images operations
-
-  - name: admin restricted
-    description: admin restricted operations
-
-  - name: permit all
-    description: operations that are open to all
-
+    description: Image upload and retrieval operations
+  - name: mail
+    description: Mail operations
   - name: user
-    description: user operations
+    description: User operations
+  - name: webhook
+    description: Facebook webhook operations
+
+security:
+  - ApiKeyAuth: []
 
 paths:
-  /sample:
+  /posts:
     get:
-      tags:
-        - admin restricted
-      summary: Summary template
-      description: Description template
-      operationId: operationId
+      tags: [posts]
+      summary: Get a paginated list of posts
+      operationId: getPosts
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: integer
       responses:
         200:
-          description: Success
+          description: A paginated list of posts
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Sample"
+                $ref: "#/components/schemas/PostPage"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [posts]
+      summary: Create a post
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostRequest"
+      responses:
+        201:
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostModel"
+  /posts/sync:
+    put:
+      tags: [posts]
+      summary: Synchronize posts with the Facebook page feed
+      operationId: syncPostsWithFacebook
+      responses:
+        202:
+          description: Sync request accepted
+  /posts/{postId}:
+    get:
+      tags: [posts]
+      summary: Get post details by id
+      operationId: getPostById
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostListQueryItemDetails"
         404:
-          description: Account not found
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [posts]
+      summary: Update a post
+      operationId: updatePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePostRequest"
+      responses:
+        200:
+          description: Post updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/PostModel"
+    delete:
+      tags: [posts]
+      summary: Delete a post
+      operationId: deletePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Post deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+  /facebook/notif:
+    get:
+      tags: [webhook]
+      summary: Facebook webhook handshake (challenge verification)
+      operationId: verifyWebhook
+      security: []
+      parameters:
+        - name: hub.mode
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: hub.verify_token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The challenge token to echo back
+          content:
+            application/json:
+              schema:
+                type: integer
+    post:
+      tags: [webhook]
+      summary: Receive a Facebook webhook notification
+      operationId: handleWebhookNotification
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookNotification"
+      responses:
+        200:
+          description: Notification accepted
+  /facebook/token:
+    post:
+      tags: [facebook]
+      summary: Save a page access token
+      operationId: saveToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenModel"
+      responses:
+        201:
+          description: Token saved
+  /facebook/accounts:
+    get:
+      tags: [facebook]
+      summary: Get user accounts from the Facebook API
+      operationId: getAccounts
+      parameters:
+        - name: accessToken
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A list of user information retrieved from the Facebook API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /facebook/posts:
+    get:
+      tags: [facebook]
+      summary: Get page posts from the Facebook API
+      operationId: getFacebookPosts
+      responses:
+        200:
+          description: A list of page posts retrieved from the Facebook API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /facebook/posts/{id}:
+    get:
+      tags: [facebook]
+      summary: Get a single post from the Facebook API
+      operationId: getPostDetails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A single post retrieved from the Facebook API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookResponse"
+  /images:
+    post:
+      tags: [images]
+      summary: Upload images
+      operationId: uploadImages
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        200:
+          description: A list of uploaded images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ImageModel"
+  /images/{id}:
+    get:
+      tags: [images]
+      summary: Get an image by id
+      operationId: getImage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The image bytes
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /mail:
+    post:
+      tags: [mail]
+      summary: Save a mail
+      operationId: saveMail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailModel"
+      responses:
+        200:
+          description: The saved mail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MailModel"
+  /user:
+    post:
+      tags: [user]
+      summary: Create a user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        200:
+          description: The created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserModel"
+    put:
+      tags: [user]
+      summary: Update a user
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        200:
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserModel"
+  /user/{email}:
+    get:
+      tags: [user]
+      summary: Get a user by email
+      operationId: getUserByEmail
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserModel"
+    delete:
+      tags: [user]
+      summary: Delete a user by email
+      operationId: deleteUserByEmail
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
 
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apiKey
+
+  responses:
+    Unauthorized:
+      description: Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
   schemas:
-    Sample:
-      type: object
-      properties:
-        balance:
-          type: number
     Error:
       type: object
       properties:
+        code:
+          type: string
         message:
           type: string
+        httpStatus:
+          type: integer
+
+    PostRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        providerId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/Image"
+        facebookImages:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacebookImage"
+      required:
+        - title
+        - description
+
+    PostModel:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        imageIds:
+          type: array
+          items:
+            type: string
+
+    PostListQueryItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        backgroundPhoto:
+          $ref: "#/components/schemas/FacebookPostImage"
+
+    PostListQueryItemDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacebookPostImage"
+
+    PostPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostListQueryItem"
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          type: array
+          items:
+            $ref: "#/components/schemas/SortItem"
+        first:
+          type: boolean
+        empty:
+          type: boolean
+      required:
+        - content
+        - totalPages
+        - totalElements
+        - last
+        - numberOfElements
+        - size
+        - number
+        - first
+        - empty
+
+    PageableObject:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+        pageSize:
+          type: integer
+        sort:
+          type: array
+          items:
+            $ref: "#/components/schemas/SortItem"
+        offset:
+          type: integer
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+
+    SortItem:
+      type: object
+      properties:
+        direction:
+          type: string
+        property:
+          type: string
+        ignoreCase:
+          type: boolean
+        nullHandling:
+          type: string
+        ascending:
+          type: boolean
+        descending:
+          type: boolean
+
+    UpdatePostRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          x-field-extra-annotation: "
+            @jakarta.validation.constraints.NotBlank(message = \"Description is mandatory\")
+            @jakarta.validation.constraints.Size(max = 1000, message = \"Description must be less than 1000 characters\")
+          "
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageModel"
+
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        data:
+          type: string
+          format: byte
+
+    FacebookImage:
+      type: object
+      properties:
+        id:
+          type: string
+        height:
+          type: integer
+        width:
+          type: integer
+        src:
+          type: string
+
+    ImageModel:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+
+    UserModel:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/ROLE"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        role:
+          $ref: "#/components/schemas/ROLE"
+        creationDate:
+          type: string
+          format: date-time
+
+    ROLE:
+      type: integer
+      enum: [0, 1, 2]
+      x-enum-varnames: [USER, ADMIN, OWNER]
+
+    MailModel:
+      type: object
+      properties:
+        id:
+          type: string
+        recipientEmail:
+          type: string
+        templateName:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    TokenModel:
+      type: object
+      properties:
+        token:
+          type: string
+        expiration:
+          type: string
+          format: date-time
+        pageId:
+          type: string
+
+    AccessTokenRs:
+      type: object
+      properties:
+        token_type:
+          type: string
+        access_token:
+          type: string
+
+    LongLivedAccessToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+
     FacebookUser:
       type: object
       properties:
@@ -67,6 +684,16 @@ components:
         id:
           type: string
 
+    WebhookNotification:
+      type: object
+      properties:
+        entry:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entry"
+        object:
+          type: string
+
     Entry:
       type: object
       properties:
@@ -77,7 +704,7 @@ components:
         changes:
           type: array
           items:
-            $ref: '#/components/schemas/Change'
+            $ref: "#/components/schemas/Change"
 
     Change:
       type: object
@@ -85,7 +712,8 @@ components:
         field:
           type: string
         value:
-          $ref: '#/components/schemas/Value'
+          $ref: "#/components/schemas/Value"
+
     Value:
       type: object
       properties:
@@ -102,133 +730,14 @@ components:
         message:
           type: string
         from:
-          $ref: '#/components/schemas/From'
+          $ref: "#/components/schemas/From"
+
     From:
       type: object
       properties:
         name:
           type: string
         id:
-          type: string
-    WebhookNotification:
-      type: object
-      properties:
-        entry:
-          type: array
-          items:
-            $ref: '#/components/schemas/Entry'
-        object:
-          type: string
-    ImageModel:
-      type: object
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-    AccessTokenRs:
-      type: object
-      properties:
-        token_type:
-          type: string
-        access_token:
-          type: string
-    LongLivedAccessToken:
-      type: object
-      properties:
-        access_token:
-          type: string
-        token_type:
-          type: string
-        expires_in:
-          type: integer
-    PostModel:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        imageIds:
-          type: array
-          items:
-            type: string
-    PostListQueryItem:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        backgroundPhoto:
-          $ref: '#/components/schemas/FacebookPostImage'
-
-    PostListQueryItemDetails:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/FacebookPostImage'
-
-    UpdatePostRequest:
-      type: object
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-          x-field-extra-annotation: "
-            @jakarta.validation.constraints.NotBlank(message = \"Description is mandatory\")
-            @jakarta.validation.constraints.Size(max = 1000, message = \"Description must be less than 1000 characters\")
-          "
-        images:
-          type: array
-          items:
-            $ref: '#/components/schemas/ImageModel'
-    UserModel:
-      type: object
-      properties:
-        email:
-          type: string
-        role:
-          $ref: '#/components/schemas/ROLE'
-    MailModel:
-      type: object
-      properties:
-        id:
-          type: string
-        recipientEmail:
-          type: string
-        templateName:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-    ROLE:
-      type: integer
-      enum: [ 0, 1, 2 ]
-      x-enum-varnames: [ USER, ADMIN, OWNER ]
-
-    TokenModel:
-      type: object
-      properties:
-        token:
-          type: string
-        expiration:
-          type: string
-          format: date-time
-        pageId:
           type: string
 
     FacebookResponse:
@@ -237,9 +746,9 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/FacebookDataItem'
+            $ref: "#/components/schemas/FacebookDataItem"
         paging:
-          $ref: '#/components/schemas/FacebookPaging'
+          $ref: "#/components/schemas/FacebookPaging"
 
     FacebookDataItem:
       type: object
@@ -260,13 +769,13 @@ components:
         description_tags:
           type: array
           items:
-            $ref: '#/components/schemas/FacebookDescriptionTags'
+            $ref: "#/components/schemas/FacebookDescriptionTags"
         media:
-          $ref: '#/components/schemas/FacebookPostMedia'
+          $ref: "#/components/schemas/FacebookPostMedia"
         subattachments:
-          $ref: '#/components/schemas/FacebookResponse'
+          $ref: "#/components/schemas/FacebookResponse"
         target:
-          $ref: '#/components/schemas/FacebookMediaTarget'
+          $ref: "#/components/schemas/FacebookMediaTarget"
         type:
           type: string
         url:
@@ -284,7 +793,7 @@ components:
       type: object
       properties:
         image:
-          $ref: '#/components/schemas/FacebookPostImage'
+          $ref: "#/components/schemas/FacebookPostImage"
 
     FacebookPostImage:
       type: object
@@ -310,12 +819,11 @@ components:
         type:
           type: string
 
-
     FacebookPaging:
       type: object
       properties:
         cursors:
-          $ref: '#/components/schemas/FacebookCursor'
+          $ref: "#/components/schemas/FacebookCursor"
         next:
           type: string
 
@@ -326,4 +834,3 @@ components:
           type: string
         after:
           type: string
-
