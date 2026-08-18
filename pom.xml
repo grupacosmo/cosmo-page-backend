@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
+<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.4</version>
+		<version>3.5.16</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.webdev.cosmo</groupId>
@@ -15,8 +15,8 @@
 	<description>backend for cosmo page</description>
 
 	<properties>
-		<java.version>20</java.version>
-		<spring-boot.version>3.1.4</spring-boot.version>
+		<java.version>21</java.version>
+		<spring-boot.version>3.5.16</spring-boot.version>
 		<spring-dotenv.version>4.0.0</spring-dotenv.version>
 		<maven-plugin.version>3.0.0</maven-plugin.version>
 		<postgresql-container.version>1.17.3</postgresql-container.version>
@@ -25,8 +25,10 @@
 		<faker.version>0.15</faker.version>
 		<gson.version>2.10.1</gson.version>
 		<commons-io.version>2.15.1</commons-io.version>
-		<spring-cloud.version>2022.0.3</spring-cloud.version>
-		<plugins.version>3.8.0</plugins.version>
+		<spring-cloud.version>2025.0.1</spring-cloud.version>
+		<springdoc.version>2.8.8</springdoc.version>
+		<plugins.version>3.14.0</plugins.version>
+		<lombok.version>1.18.42</lombok.version>
 	</properties>
 
 	<dependencies>
@@ -52,7 +54,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.0.0</version>
+			<version>${springdoc.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -88,6 +90,14 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 
 
@@ -135,8 +145,30 @@
 			<version>${faker.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openapi4j</groupId>
+			<artifactId>openapi-parser</artifactId>
+			<version>1.0.7</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openapi4j</groupId>
+			<artifactId>openapi-schema-validator</artifactId>
+			<version>1.0.7</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -193,30 +225,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-							<version>${lombok.version}</version>
-						</path>
-						<dependency>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok-mapstruct-binding</artifactId>
-							<version>${lombok.mapstruct.binding.version}</version>
-						</dependency>
-						<path>
-							<groupId>org.mapstruct</groupId>
-							<artifactId>mapstruct-processor</artifactId>
-							<version>${mapstruct.version}</version>
-						</path>
-					</annotationProcessorPaths>
-					<compilerArgs>
-						<compilerArg>
-							-Amapstruct.defaultComponentModel=spring
-						</compilerArg>
-					</compilerArgs>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -238,6 +246,82 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>9.0.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+						<phase>initialize</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
+					<abbrevLength>7</abbrevLength>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.1.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.14</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>org/openapitools/**</exclude>
+								<exclude>com/webdev/cosmo/cosmobackend/emulator/**</exclude>
+							</excludes>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.25</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
 				<version>6.2.1</version>
@@ -247,7 +331,6 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<skipValidateSpec>true</skipValidateSpec>
 							<inputSpec>./src/main/resources/schemas.yml</inputSpec>
 							<generatorName>spring</generatorName>
 							<configOptions>

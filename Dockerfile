@@ -9,7 +9,7 @@ COPY src/ /project/src
 
 RUN mvn package -DskipTests
 
-FROM amazoncorretto:20-alpine-jdk
+FROM amazoncorretto:21-alpine-jdk
 
 RUN mkdir /app
 
@@ -23,6 +23,8 @@ WORKDIR /app
 
 RUN chown -R cosmopk:cosmo /app
 
+USER cosmopk
+
 EXPOSE 8080
 
-CMD java $JAVA_OPTS -jar backend.jar
+CMD ["sh", "-c", "java $JAVA_OPTS -jar backend.jar"]
