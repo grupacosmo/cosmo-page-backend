@@ -25,7 +25,8 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     private static final List<String> PATHS_TO_BE_SKIPPED = List.of(
             "/api/facebook/notif",
             "/api/user-privacy/terms",
-            "/api/user-privacy/policy"
+            "/api/user-privacy/policy",
+            "/actuator/health"
     );
 
     @Override

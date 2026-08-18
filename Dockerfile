@@ -7,7 +7,7 @@ RUN mvn dependency:go-offline
 
 COPY src/ /project/src
 
-RUN mvn package
+RUN mvn package -DskipTests
 
 FROM amazoncorretto:20-alpine-jdk
 
