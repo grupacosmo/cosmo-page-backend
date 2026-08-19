@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.openapitools.model.UserModel;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_REQUEST;
 
 @Service
@@ -22,13 +20,13 @@ public class UserServiceImpl implements UserService {
     public UserModel save(User user) {
         User savedUser = userRepository.save(user);
 
-        return userMapper.mapToModel(Optional.of(savedUser));
+        return userMapper.mapToModel(savedUser);
     }
 
     @Override
     public UserModel findByEmail(String email) {
-        Optional<User> user = Optional.ofNullable(userRepository.findByEmail(email)
-                .orElseThrow(INVALID_REQUEST::getError));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(INVALID_REQUEST::getError);
         return userMapper.mapToModel(user);
     }
 
@@ -37,22 +35,23 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(updatedUser.getEmail())
                 .orElseThrow(INVALID_REQUEST::getError);
 
-        user.setEmail(updatedUser.getEmail())
-                .setRole(updatedUser.getRole())
-                .setId(updatedUser.getId())
+        user.setRole(updatedUser.getRole())
                 .setSurname(updatedUser.getSurname())
-                .setName(updatedUser.getName())
-                .setCreationDate(updatedUser.getCreationDate());
+                .setName(updatedUser.getName());
+
+        if (updatedUser.getCreationDate() != null) {
+            user.setCreationDate(updatedUser.getCreationDate());
+        }
 
         userRepository.save(user);
 
-        return userMapper.mapToModel(Optional.of(user));
+        return userMapper.mapToModel(user);
     }
 
     @Override
     public void deleteByEmail(String email) {
-        Optional<User> user = Optional.ofNullable(userRepository.findByEmail(email))
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(INVALID_REQUEST::getError);
-        userRepository.deleteById(user.get().getId());
+        userRepository.deleteById(user.getId());
     }
 }

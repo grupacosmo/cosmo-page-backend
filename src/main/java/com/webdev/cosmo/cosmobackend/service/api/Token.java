@@ -13,6 +13,7 @@ public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+    @Column(name = "\"value\"")
     private String value;
     private String validityPeriod;
     private String pageId;

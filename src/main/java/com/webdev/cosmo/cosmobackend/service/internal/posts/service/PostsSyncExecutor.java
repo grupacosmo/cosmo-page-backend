@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.FacebookDataItem;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -24,6 +25,7 @@ public class PostsSyncExecutor implements Executor {
     private final Function<List<FacebookDataItem>, List<Post>> postsFromDataItemsBuilder;
 
     @Override
+    @Transactional
     public void execute() {
         List<FacebookDataItem> facebookDataItems = facebookDataItemProvider.get();
         List<FacebookDataItem> facebookDataItemsToBeAdded = unsavedPostsExtractor.apply(facebookDataItems, postRepository.findAll());

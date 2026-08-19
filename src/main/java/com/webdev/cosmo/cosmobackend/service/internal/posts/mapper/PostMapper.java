@@ -59,6 +59,7 @@ public abstract class PostMapper {
     @Mapping(source = "facebookDataItem.media.image", target = "facebookImages")
     @Mapping(source = "facebookDataItem.message", target = "description")
     @Mapping(source = "facebookDataItem.id", target = "providerId")
+    @Mapping(target = "id", ignore = true)
     public abstract Post mapPostFromFacebookData(FacebookDataItem facebookDataItem);
 
     public List<FacebookImage> map(FacebookPostImage value) {
