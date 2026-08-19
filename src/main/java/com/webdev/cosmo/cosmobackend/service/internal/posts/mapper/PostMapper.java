@@ -63,12 +63,14 @@ public abstract class PostMapper {
 
     public List<FacebookImage> map(FacebookPostImage value) {
         if(value == null)
-            return List.of();
+            return new ArrayList<>();
 
-        return List.of(new FacebookImage()
+        List<FacebookImage> images = new ArrayList<>();
+        images.add(new FacebookImage()
                 .setSrc(value.getSrc())
                 .setWidth(value.getWidth())
                 .setHeight(value.getHeight()));
+        return images;
     }
 
     public Post mapPostFromFacebookData(Pair<FacebookDataItem, FacebookResponse> fbPair, Post post) {
