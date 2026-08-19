@@ -1,0 +1,18 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+facebook:
+  emulator:
+    enabled: true
+  client-id: ""
+  client-secret: ""
+  notif-token: dupa123
+
+env:
+  url: ""
+  api-keys: test-api-key
+  api-keys-required: true
