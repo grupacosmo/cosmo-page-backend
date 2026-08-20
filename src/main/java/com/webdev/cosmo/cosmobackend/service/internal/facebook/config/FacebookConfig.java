@@ -82,9 +82,11 @@ public class FacebookConfig {
     public CommandLineRunner startupTokenReader(
             final Supplier<Token> tokenSupplier,
             final FacebookClient facebookClient,
-            final Cache cache
+            final Cache cache,
+            @Value("${facebook.page-token:}") final String pageTokenFromProps,
+            @Value("${facebook.page-id:}") final String pageIdFromProps
     ) {
-        return new StartupTokenReader(tokenSupplier, facebookClient, cache);
+        return new StartupTokenReader(tokenSupplier, facebookClient, cache, pageTokenFromProps, pageIdFromProps);
     }
 
     @Bean
