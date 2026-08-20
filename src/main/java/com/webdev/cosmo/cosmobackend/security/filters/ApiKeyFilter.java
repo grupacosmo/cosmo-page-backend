@@ -8,7 +8,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -22,6 +24,12 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     private final Predicate<String> apiKeyValidator;
 
+    @Value("${env.api-keys:}")
+    private String apiKeys;
+
+    @Value("${env.api-keys-required:false}")
+    private boolean apiKeysRequired;
+
     private static final List<String> PATHS_TO_BE_SKIPPED = List.of(
             "/api/facebook/notif",
             "/api/user-privacy/terms",
@@ -31,6 +39,11 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (!apiKeysRequired || !StringUtils.hasText(apiKeys) || PATHS_TO_BE_SKIPPED.contains(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String apiKey = request.getHeader("apiKey");
 
         if(!PATHS_TO_BE_SKIPPED.contains(request.getRequestURI()) && apiKeyValidator.negate().test(apiKey)){
