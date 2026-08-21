@@ -2,9 +2,10 @@ spring:
   jackson:
     defaultPropertyInclusion: non_null
   jpa:
-    show-sql: true
     hibernate:
       ddl-auto: update
+  flyway:
+    enabled: false
 
 images:
   types:
@@ -24,6 +25,8 @@ facebook:
 env:
   url: ${PROD_URL:http://localhost:8080}
   api-keys: ${API_KEYS:}
+  api-keys-required: ${API_KEYS_REQUIRED:false}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://cosmopk.pl}
 
 endpoint:
   secured:
@@ -38,11 +41,3 @@ mail:
   auth: true
   starttlsEnable: true
   debug: false
-
-logging:
-  level:
-    org:
-      springframework:
-        web:
-          filter:
-            CommonsRequestLoggingFilter: DEBUG

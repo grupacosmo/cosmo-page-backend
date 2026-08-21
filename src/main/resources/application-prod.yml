@@ -5,7 +5,10 @@ spring:
     password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
 
 facebook:
   emulator:
@@ -23,3 +26,16 @@ images:
 env:
   url: ${PROD_URL}
   api-keys: ${API_KEYS}
+  api-keys-required: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

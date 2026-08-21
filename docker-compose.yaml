@@ -7,12 +7,31 @@ services:
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:
-      - '5432:5432'
+      - '${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d cosmo_backend']
       interval: 5s
       timeout: 5s
       retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  mailhog:
+    image: 'mailhog/mailhog:v1.0.1'
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
 
   backend:
     build: .
@@ -22,6 +41,8 @@ services:
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/cosmo_backend'
       - 'SPRING_DATASOURCE_USERNAME=postgres'
       - 'SPRING_DATASOURCE_PASSWORD=postgres'
+      - 'MAIL_HOST=mailhog'
+      - 'MAIL_PORT=1025'
     ports:
       - '8080:8080'
     depends_on:
@@ -33,3 +54,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+volumes:
+  postgres-data:
