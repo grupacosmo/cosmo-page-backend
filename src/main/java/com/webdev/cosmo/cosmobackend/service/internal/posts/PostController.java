@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -59,8 +58,6 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public Map<String, String> deletePost(@PathVariable String postId) {
         service.deletePost(postId);
-        return new HashMap<>() {{
-            put("id", postId);
-        }};
+        return Map.of("id", postId);
     }
 }

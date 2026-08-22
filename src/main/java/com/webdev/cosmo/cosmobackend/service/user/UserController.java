@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.openapitools.model.UserModel;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -33,8 +32,6 @@ public class UserController {
     @DeleteMapping(value ="{email}")
     public Map<String, String> deleteUser(@PathVariable String email){
          userService.deleteByEmail(email);
-        return new HashMap<>() {{
-            put("email", email);
-        }};
+        return Map.of("email", email);
     }
 }

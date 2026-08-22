@@ -10,7 +10,7 @@ facebook:
     enabled: true
   client-id: ""
   client-secret: ""
-  notif-token: dupa123
+  notif-token: test-webhook-token
 
 env:
   url: ""

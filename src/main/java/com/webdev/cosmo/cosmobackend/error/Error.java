@@ -19,7 +19,7 @@ public enum Error {
     POST_NOT_FOUND("Post with given id not found", HttpStatus.NOT_FOUND),
     INVALID_POST_DATA("Invalid post data", HttpStatus.BAD_REQUEST),
     MAIL_SAVE_ERROR("Error when saving mail", HttpStatus.BAD_REQUEST),
-    MAIL_HISTORY_EXISTS_ERROR("Error when saving mail", HttpStatus.CONFLICT),
+    MAIL_HISTORY_EXISTS_ERROR("Mail history entry already exists", HttpStatus.CONFLICT),
     NO_TOKENS_FOUND("No tokens found in the database", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_ACCESS_TOKEN("Invalid access token, or insufficient permissions granted", HttpStatus.BAD_REQUEST),
     INVALID_CACHE_DATA("Invalid cache data, please validate it.", HttpStatus.INTERNAL_SERVER_ERROR),
