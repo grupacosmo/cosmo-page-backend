@@ -1,8 +1,7 @@
 package com.webdev.cosmo.cosmobackend.security.filters;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.webdev.cosmo.cosmobackend.error.Error;
+import com.webdev.cosmo.cosmobackend.error.ErrorResponseWriter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +13,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -23,6 +21,7 @@ import java.util.function.Predicate;
 public class ApiKeyFilter extends OncePerRequestFilter {
 
     private final Predicate<String> apiKeyValidator;
+    private final ErrorResponseWriter errorResponseWriter;
 
     @Value("${env.api-keys:}")
     private String apiKeys;
@@ -46,20 +45,8 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
         final String apiKey = request.getHeader("apiKey");
 
-        if(!PATHS_TO_BE_SKIPPED.contains(request.getRequestURI()) && apiKeyValidator.negate().test(apiKey)){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            Error errorResponse = Error.INVALID_API_KEY;
-
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(Error.class, new Error.Serializer())
-                    .create();
-
-            String jsonErrorResponse = gson.toJson(errorResponse);
-
-            PrintWriter writer = response.getWriter();
-            writer.print(jsonErrorResponse);
-            writer.flush();
+        if (apiKeyValidator.negate().test(apiKey)) {
+            errorResponseWriter.write(response, Error.INVALID_API_KEY);
             return;
         }
 

@@ -1,6 +1,5 @@
 package com.webdev.cosmo.cosmobackend.service.internal.posts;
 
-import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
 import com.webdev.cosmo.cosmobackend.util.interfaces.*;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
 import org.openapitools.model.PostListQueryItemDetails;
 import org.openapitools.model.PostModel;
+import org.openapitools.model.PostRequest;
 import org.openapitools.model.UpdatePostRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -34,8 +34,8 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PostModel createPost(@RequestBody Post post) {
-        return service.createPost(post);
+    public PostModel createPost(@RequestBody PostRequest postRequest) {
+        return service.createPost(postRequest);
     }
 
     @GetMapping("/{postId}")

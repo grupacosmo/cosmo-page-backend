@@ -62,6 +62,9 @@ public abstract class PostMapper {
     @Mapping(target = "id", ignore = true)
     public abstract Post mapPostFromFacebookData(FacebookDataItem facebookDataItem);
 
+    @Mapping(target = "id", ignore = true)
+    public abstract Post map(PostRequest postRequest);
+
     public List<FacebookImage> map(FacebookPostImage value) {
         if(value == null)
             return new ArrayList<>();

@@ -1,9 +1,8 @@
 package com.webdev.cosmo.cosmobackend.security.filters;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.webdev.cosmo.cosmobackend.config.EndpointConfig;
 import com.webdev.cosmo.cosmobackend.error.Error;
+import com.webdev.cosmo.cosmobackend.error.ErrorResponseWriter;
 import com.webdev.cosmo.cosmobackend.security.FacebookAuthentication;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,18 +15,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import static java.util.Objects.isNull;
-
 
 
 @RequiredArgsConstructor
 public class UserAuthenticationFilter extends OncePerRequestFilter {
 
     private final EndpointConfig endpointConfig;
-
     private final AuthenticationManager customAuthenticationManager;
+    private final ErrorResponseWriter errorResponseWriter;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -44,19 +41,7 @@ public class UserAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if(isNull(accessToken) || isNull(userId)){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            Error errorResponse = Error.NO_ACCESS_TOKEN_OR_USER_ID;
-
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(Error.class, new Error.Serializer())
-                    .create();
-
-            String jsonErrorResponse = gson.toJson(errorResponse);
-
-            PrintWriter writer = response.getWriter();
-            writer.print(jsonErrorResponse);
-            writer.flush();
+            errorResponseWriter.write(response, Error.NO_ACCESS_TOKEN_OR_USER_ID);
             return;
         }
 

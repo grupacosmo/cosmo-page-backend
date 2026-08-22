@@ -23,6 +23,7 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.webdev.cosmo.cosmobackend.error.ErrorResponseWriter;
 import com.webdev.cosmo.cosmobackend.security.filters.RequestIdFilter;
 
 import java.util.Arrays;
@@ -39,8 +40,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    OncePerRequestFilter customAuthenticationFilter(final EndpointConfig endpointConfig, final AuthenticationManager customAuthenticationManager) {
-        return new UserAuthenticationFilter(endpointConfig, customAuthenticationManager);
+    OncePerRequestFilter customAuthenticationFilter(final EndpointConfig endpointConfig, final AuthenticationManager customAuthenticationManager, final ErrorResponseWriter errorResponseWriter) {
+        return new UserAuthenticationFilter(endpointConfig, customAuthenticationManager, errorResponseWriter);
     }
 
     @Bean

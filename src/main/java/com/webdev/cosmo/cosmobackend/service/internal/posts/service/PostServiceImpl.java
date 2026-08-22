@@ -5,6 +5,7 @@ import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostModel;
+import org.openapitools.model.PostRequest;
 
 import java.util.List;
 
@@ -17,7 +18,8 @@ public class PostServiceImpl implements PostService {
     private final PostMapper mapper;
 
     @Override
-    public PostModel createPost(Post post) {
+    public PostModel createPost(PostRequest postRequest) {
+        Post post = mapper.map(postRequest);
         return mapper.map(repository.save(post));
     }
 

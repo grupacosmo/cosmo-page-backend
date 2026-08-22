@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openapitools.model.PostModel;
+import org.openapitools.model.PostRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,13 +34,15 @@ class PostServiceImplTest {
     private PostServiceImpl postService;
 
     @Test
-    void createPost_savesAndMaps() {
+    void createPost_mapsRequestAndSaves() {
+        PostRequest request = new PostRequest().title("title").description("description");
         Post post = new Post().setTitle("title").setDescription("description");
         PostModel model = new PostModel().title("title").description("description");
+        when(mapper.map(request)).thenReturn(post);
         when(repository.save(post)).thenReturn(post);
         when(mapper.map(post)).thenReturn(model);
 
-        PostModel result = postService.createPost(post);
+        PostModel result = postService.createPost(request);
 
         assertThat(result).isEqualTo(model);
         verify(repository).save(post);
