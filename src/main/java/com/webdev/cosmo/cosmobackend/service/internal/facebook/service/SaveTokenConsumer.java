@@ -18,6 +18,10 @@ import java.util.function.Consumer;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_ACCESS_TOKEN;
 
+/**
+ * Replaces the stored page token with a long-lived one obtained from the Facebook
+ * exchange endpoint and refreshes the in-memory cache.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class SaveTokenConsumer implements Consumer<TokenModel> {

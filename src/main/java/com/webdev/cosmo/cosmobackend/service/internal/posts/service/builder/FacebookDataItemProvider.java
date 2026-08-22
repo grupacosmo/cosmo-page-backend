@@ -1,8 +1,8 @@
 package com.webdev.cosmo.cosmobackend.service.internal.posts.service.builder;
 
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.common.validator.CacheValidator;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
-import com.webdev.cosmo.cosmobackend.util.interfaces.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,11 +19,14 @@ import java.util.function.Supplier;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_CACHE_DATA;
 
+/**
+ * Reads the (paginated) list of posts from the Facebook feed.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class FacebookDataItemProvider implements Supplier<List<FacebookDataItem>> {
-    private final Validator<Cache> cacheValidator;
+    private final CacheValidator cacheValidator;
     private final Cache cache;
     private final FacebookClient facebookClient;
 

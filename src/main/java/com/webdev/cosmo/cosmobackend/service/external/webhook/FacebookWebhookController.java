@@ -1,7 +1,5 @@
 package com.webdev.cosmo.cosmobackend.service.external.webhook;
 
-import com.webdev.cosmo.cosmobackend.service.external.webhook.NotifContext;
-import com.webdev.cosmo.cosmobackend.service.external.webhook.Strategy;
 import com.webdev.cosmo.cosmobackend.service.external.webhook.models.NotifStrategyRecord;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
@@ -9,20 +7,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.WebhookNotification;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.function.Consumer;
-
+/**
+ * Entry point for Facebook webhook traffic: handshake verification (GET) and
+ * post-change notifications (POST).
+ */
 @Slf4j
 @RestController
-@RequestMapping
+@RequestMapping("/api/facebook/notif")
 @RequiredArgsConstructor
 public class FacebookWebhookController {
     private final Strategy<Integer, NotifContext> notifStrategy;
-    private final Consumer<WebhookNotification> webhookNotificationConsumer;
+    private final WebhookNotificationConsumer webhookNotificationConsumer;
 
     @Resource(name = "notifContext")
     private NotifContext notifContext;
 
-    @GetMapping("/api/facebook/notif")
+    @GetMapping
     public Integer triggerNotif(
             @RequestParam("hub.mode") String subscribe,
             @RequestParam("hub.challenge") int challenge,
@@ -36,7 +36,7 @@ public class FacebookWebhookController {
         return notifStrategy.run(notifContext);
     }
 
-    @PostMapping("/api/facebook/notif")
+    @PostMapping
     public void sampleWebhookTest(@RequestBody WebhookNotification body) {
         webhookNotificationConsumer.accept(body);
     }

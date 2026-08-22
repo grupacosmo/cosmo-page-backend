@@ -1,7 +1,10 @@
 package com.webdev.cosmo.cosmobackend.service.internal.posts;
 
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PageablePostsService;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostDetailsQueryService;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
-import com.webdev.cosmo.cosmobackend.util.interfaces.*;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostsSyncExecutor;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.UpdatePostService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
@@ -20,10 +23,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService service;
-    private final UpdateService<UpdatePostRequest, PostModel, String> updatePostService;
-    private final Executor postsSyncExecutor;
-    private final PageableQueryService<PostListQueryItem> pageablePostsService;
-    private final SimpleQueryService<String, PostListQueryItemDetails> postDetailsQueryService;
+    private final UpdatePostService updatePostService;
+    private final PostsSyncExecutor postsSyncExecutor;
+    private final PageablePostsService pageablePostsService;
+    private final PostDetailsQueryService postDetailsQueryService;
 
 
     @PutMapping("/sync")

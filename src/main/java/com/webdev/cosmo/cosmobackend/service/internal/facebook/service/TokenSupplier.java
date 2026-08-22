@@ -8,6 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Provides a stored page token, falling back to an empty token (and a log line)
+ * when none is present.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class TokenSupplier implements Supplier<Token> {

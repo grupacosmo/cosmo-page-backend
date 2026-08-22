@@ -3,7 +3,7 @@ package com.webdev.cosmo.cosmobackend.config;
 import com.webdev.cosmo.cosmobackend.emulator.FacebookClientEmulator;
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
-import com.webdev.cosmo.cosmobackend.util.interfaces.Executor;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostsSyncExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,7 +36,7 @@ public class FacebookClientConfig {
 
     @Bean
     @ConditionalOnProperty(name = "facebook.emulator.enabled", havingValue = "true")
-    public CommandLineRunner emulatorDataSeed(Executor postsSyncExecutor) {
+    public CommandLineRunner emulatorDataSeed(PostsSyncExecutor postsSyncExecutor) {
         return args -> {
             try {
                 postsSyncExecutor.execute();

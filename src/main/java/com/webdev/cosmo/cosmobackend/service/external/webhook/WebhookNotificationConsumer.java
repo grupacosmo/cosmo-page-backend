@@ -15,6 +15,10 @@ import java.util.function.Consumer;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.WEBHOOK_NOT_SUPPORTED;
 
+/**
+ * Handles a Facebook webhook notification by fetching the changed post from the
+ * Graph API and saving it locally.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

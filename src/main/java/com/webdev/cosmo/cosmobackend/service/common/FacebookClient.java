@@ -6,6 +6,10 @@ import org.openapitools.model.FacebookUser;
 import org.openapitools.model.LongLivedAccessToken;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Feign client for the Facebook Graph API. Implemented by both the real Feign
+ * proxy and the {@code FacebookClientEmulator} used in the local/test profiles.
+ */
 public interface FacebookClient {
 
     @GetMapping(path = "/oauth/access_token")
