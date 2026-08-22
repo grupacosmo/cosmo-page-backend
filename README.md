@@ -12,101 +12,322 @@ Before deploying the Spring Boot application, ensure that you have the following
 
 ## Prerequisites
 
-- Java JDK 20+(Spring Boot 3.1.4+)
-- Maven 3.6.0+
-- PostgreSQL
+- **JDK 21**
+- **Docker + Docker Compose** — required for `docker compose` flows and for the integration tests
+  (Testcontainers spins up a real Postgres). The application itself can run without Docker.
+- **PostgreSQL** (or use the one started by Compose)
+- **No global Maven needed** — the project ships the Maven wrapper (`./mvnw` / `mvnw.cmd`).
 
-## Setup
+---
 
-All setup related operations are processed via **Maven** build system. A Maven **wrapper**
-(`mvnw`) is included, so no global Maven installation is required:
+## Running the application
 
-```shell
-./mvnw clean install       # Linux/macOS
-mvnw.cmd clean install     # Windows
-```
+Every supported way to run, test and build the app. Pick the scenario that matches what you want
+to do.
 
-After the execution of command given above the executable **JAR** file will be generated and
-placed into **target** folder in the root directory of the project.
+| Scenario | Section |
+| --- | --- |
+| Local development, everything in Docker (easiest) | [1. Full stack via Docker Compose](#1-local-development--full-stack-via-docker-compose) |
+| Local development, backend on host (hot reload) | [2. Postgres in Docker + backend on host](#2-local-development--postgres-in-docker--backend-on-host) |
+| Run the tests | [3. Tests](#3-tests) |
+| Build the jar only | [4. Build](#4-build) |
+| Run the jar with the `prod` profile | [5. Run the jar (bare metal)](#5-run-the-jar-bare-metal) |
+| Run the Docker image directly | [6. Run the Docker image](#6-run-the-docker-image) |
+| Which profile to pick | [7. Profiles](#7-profiles) |
+| All configuration knobs | [8. Environment variables](#8-environment-variables) |
+| Facebook emulator vs real API | [9. Facebook emulator vs real API](#9-facebook-emulator-vs-real-api) |
+| Problems? | [10. Troubleshooting](#10-troubleshooting) |
 
-### Local (dev)
+### 1. Local development — full stack via Docker Compose
 
-The whole stack (Postgres **and** the backend) starts together with a single command and
-requires **no environment variables**:
-
-```shell
-docker compose up -d
-```
-
-Compose starts Postgres first and waits for it to be healthy (`pg_isready`), then starts the
-backend. The app connects to Postgres at `jdbc:postgresql://postgres:5432/cosmo_backend`
-(`postgres`/`postgres`), uses the `local` profile, the Facebook emulator is enabled, and the
-local API key defaults to `local-dev-key`.
-
-On startup the app **auto-seeds** the database with the emulator's sample posts, so there is
-**no need to call any endpoint manually** before the API returns data.
-
-The API is exposed on `http://localhost:8080`.
-
-To stop everything: `docker compose down`.
-
-Both services have `restart: unless-stopped` and healthchecks, so Compose brings them back up
-automatically and reports their status via `docker compose ps`.
-
-To build/run only the backend manually (e.g. with hot-reload), you can still start just the
-database with `docker compose up -d postgres` and run `./mvnw spring-boot:run` on the host —
-the `local` profile points at `localhost:5432`.
-
-### Facebook emulator
-
-In the `local` profile the Facebook Graph API is **emulated** (`facebook.emulator.enabled=true`).
-Instead of calling the real API, the app serves sample posts (`FacebookClientEmulator`), so you can
-develop and test the whole flow — `POST /api/posts/sync`, `GET /api/posts`, `GET /api/facebook/posts`
-— **without a real page access token or network access to Facebook**. The database is seeded with
-sample posts automatically at startup.
-
-In `prod` (`facebook.emulator.enabled=false`) the real Facebook client is used and `FB_TOKEN`,
-`CLIENT_ID` and `CLIENT_SECRET` are required.
-
-### Prod
-
-Prod reads its configuration from environment variables. The only one that is *truly required*
-for the app to talk to Facebook is the page access token (`FB_TOKEN`).
-
-Optional file-based setup: copy `.env.example` to `.env` and fill in the values. The
-`spring-dotenv` dependency loads `.env` automatically at startup, so no shell exports are needed.
-
-```dotenv
-POSTGRES_URL
-POSTGRES_USERNAME
-POSTGRES_PASSWORD
-FB_TOKEN          # webhook verification token
-FB_PAGE_TOKEN     # page access token used to fetch posts (alternative to /api/facebook/token)
-FB_PAGE_ID        # the Facebook page id
-CLIENT_ID         # optional
-CLIENT_SECRET     # optional
-PROD_URL
-API_KEYS
-MAIL_HOST
-MAIL_PORT
-MAIL_USERNAME
-MAIL_PASSWORD
-```
-
-At startup the app reads the page token from the database (set via `POST /api/facebook/token`).
-If the database is empty, it falls back to `FB_PAGE_TOKEN` + `FB_PAGE_ID` from the environment —
-so you can provide the token purely via env, with no manual API call.
-
-Run the application with the `prod` profile:
+The fastest way to start. One command runs **Postgres + MailHog + the backend**.
 
 ```shell
-java -jar -Dspring.profiles.active=prod target/cosmo-backend-<version>.jar
+docker compose up -d --build
 ```
 
-In `prod` the database is **not** auto-seeded — posts are populated via the Facebook webhook
-and/or `POST /api/posts/sync`.
+| What | Where |
+| --- | --- |
+| Backend API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| MailHog (local e-mails) | http://localhost:8025 |
+| Postgres | `localhost:5432` (`postgres` / `postgres`, DB `cosmo_backend`) |
 
-The only difference between dev and prod is the active profile — nothing else needs to change.
+- The backend starts with the **`local`** profile: Facebook API is **emulated**, sample posts are
+  seeded automatically, **no environment variables are required**, and **no API key is required**
+  (`api-keys-required=false`).
+- Postgres data lives in the named volume `postgres-data`, so it survives `docker compose down`.
+
+> **Click-to-test:** a ready Postman collection with every endpoint, sample bodies and variables is
+> shipped in [`postman/cosmo-page-backend.postman_collection.json`](./postman/cosmo-page-backend.postman_collection.json).
+> Import it, start the app, and click — no need to type requests by hand.
+
+Useful commands:
+
+```shell
+docker compose ps                 # status of all services
+docker compose logs -f backend    # follow backend logs
+docker compose down               # stop (database data is kept)
+docker compose down -v            # stop AND wipe the database volume
+docker compose up -d --build      # rebuild and start after code changes
+```
+
+### 2. Local development — Postgres in Docker + backend on host
+
+Use this when you want the backend running directly on your machine (faster restarts, hot reload
+via `spring-boot-devtools`, easier debugging in your IDE).
+
+1. Start only the database:
+
+```shell
+docker compose up -d postgres
+```
+
+2. Run the backend from the host with the `local` profile:
+
+```shell
+# Linux / macOS
+SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+
+# Windows PowerShell
+$env:SPRING_PROFILES_ACTIVE="local"
+.\mvnw.cmd spring-boot:run
+```
+
+The `local` profile connects to `jdbc:postgresql://localhost:5432/cosmo_backend`
+(`postgres` / `postgres`), enables the Facebook emulator and hot reload.
+
+> Tip: in IntelliJ IDEA you can also create a Spring Boot run configuration and set the **active
+> profile** to `local`.
+
+### 3. Tests
+
+All tests need Docker (Testcontainers starts a `postgres:16` container).
+
+```shell
+# everything: unit + integration + contract tests + coverage gate
+./mvnw clean verify
+
+# unit tests only
+./mvnw test
+
+# integration tests only
+./mvnw verify -Dit.test='*IT'
+
+# one integration test class
+./mvnw verify -Dit.test='PostIT'
+```
+
+What runs during `verify`:
+
+- **Unit tests** (`src/test`) — mocked service/mapper logic.
+- **Integration tests** (`src/integration-tests`) — real HTTP calls against a real Postgres
+  (Testcontainers): posts, users, images, webhook handshake, health.
+- **Contract tests** (`ContractsIT`) — validates that HTTP responses match the canonical OpenAPI
+  spec (`src/main/resources/schemas.yml`).
+- **JaCoCo** — coverage report and a minimum coverage gate.
+
+Reports: test reports in `target/surefire-reports` and `target/failsafe-reports`; coverage report
+at `target/site/jacoco/index.html`.
+
+### 4. Build
+
+```shell
+# full build (jar + tests)
+./mvnw clean install
+
+# build the jar without running tests
+./mvnw clean package -DskipTests
+```
+
+The executable jar is produced at `target/cosmo-backend-0.0.1-SNAPSHOT.jar`.
+
+### 5. Run the jar (bare metal)
+
+Used for production-like runs outside Docker, or anywhere you run the jar directly.
+
+1. Make sure a Postgres instance is reachable and set the required variables
+   ([8. Environment variables](#8-environment-variables)): `POSTGRES_URL`, `POSTGRES_USERNAME`,
+   `POSTGRES_PASSWORD`, `API_KEYS`, `PROD_URL`, `FB_TOKEN` (+ `FB_PAGE_TOKEN` / `FB_PAGE_ID` when
+   you don't store the token via the API).
+
+2. Run with the `prod` profile:
+
+```shell
+# Linux / macOS
+SPRING_PROFILES_ACTIVE=prod \
+POSTGRES_URL=jdbc:postgresql://... \
+POSTGRES_USERNAME=... POSTGRES_PASSWORD=... \
+API_KEYS=... PROD_URL=https://cosmopk.pl FB_TOKEN=... \
+java -jar target/cosmo-backend-0.0.1-SNAPSHOT.jar
+
+# Windows PowerShell
+$env:SPRING_PROFILES_ACTIVE="prod"
+$env:POSTGRES_URL="jdbc:postgresql://..."
+# ... set the remaining variables ...
+java -jar target\cosmo-backend-0.0.1-SNAPSHOT.jar
+```
+
+Alternatively use the **`.env` file** — the `spring-dotenv` dependency reads it automatically from
+the working directory (see `.env.example`):
+
+```shell
+cp .env.example .env    # fill in the values
+java -Dspring.profiles.active=prod -jar target/cosmo-backend-0.0.1-SNAPSHOT.jar
+```
+
+> In `prod` the database schema is managed by **Flyway** (`ddl-auto: validate`). A fresh database
+> is created automatically from `src/main/resources/db/migration`. Swagger is disabled and actuator
+> exposes only `health` and `info`.
+
+### 6. Run the Docker image
+
+The image is built from the `Dockerfile` (Java 21, runs as non-root `cosmopk`).
+
+Build the image locally:
+
+```shell
+docker build -t cosmopk/cosmo-page-backend .
+```
+
+Run with the `prod` profile (env from a file):
+
+```shell
+docker run -d --name cosmo-backend \
+  -p 8080:8080 \
+  --env-file .env-prod \
+  --restart unless-stopped \
+  cosmopk/cosmo-page-backend
+```
+
+Run locally against Postgres running on the host:
+
+```shell
+docker run -d --name cosmo-backend -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=local \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/cosmo_backend \
+  -e SPRING_DATASOURCE_USERNAME=postgres \
+  -e SPRING_DATASOURCE_PASSWORD=postgres \
+  --restart unless-stopped \
+  cosmopk/cosmo-page-backend
+```
+
+> `host.docker.internal` points from the container to your machine. On Linux you may need
+> `--add-host=host.docker.internal:host-gateway`.
+
+Verify it is up:
+
+```shell
+curl http://localhost:8080/actuator/health   # -> {"status":"UP", ...}
+```
+
+### 7. Profiles
+
+| Profile | When to use | Datasource | Facebook | Flyway | API key | Swagger |
+| --- | --- | --- | --- | --- | --- | --- |
+| `local` | local development | `localhost:5432` (`postgres`/`postgres`) | emulated | off (`ddl-auto: update`) | not required | on |
+| `test` | integration tests only | Testcontainers Postgres | emulated | on + `ddl-auto: validate` | required | n/a |
+| `prod` | production | `POSTGRES_URL` env | real | on + `ddl-auto: validate` | **required** | off |
+| *(none)* | manual run with env vars | `POSTGRES_URL` env | emulated by default | off | optional | on |
+
+The default/base configuration lives in `application.yml`; profile-specific files are
+`application-local.yml` and `application-prod.yml`. The `test` profile is only used by the
+integration tests.
+
+### 8. Environment variables
+
+| Variable | Required | Description | Default |
+| --- | --- | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | dev/local | active profile (`local` or `prod`) | *none* |
+| `POSTGRES_URL` | prod | JDBC URL (`jdbc:postgresql://host:5432/db`) | — |
+| `POSTGRES_USERNAME` | prod | DB user | — |
+| `POSTGRES_PASSWORD` | prod | DB password | — |
+| `API_KEYS` | prod | comma-separated accepted API keys (`apiKey` header) | empty |
+| `API_KEYS_REQUIRED` | — | reject requests without a valid key | `false` (`true` in prod) |
+| `CORS_ALLOWED_ORIGINS` | — | comma-separated allowed origins | `http://localhost:4200,https://cosmopk.pl` |
+| `FB_TOKEN` | prod | Facebook webhook verify token | empty |
+| `FB_PAGE_TOKEN` | optional | page access token (startup fallback) | empty |
+| `FB_PAGE_ID` | optional | Facebook page id (startup fallback) | empty |
+| `CLIENT_ID` / `CLIENT_SECRET` | optional | Facebook app credentials | empty |
+| `PROD_URL` | prod | public URL of the API | `http://localhost:8080` |
+| `MAIL_HOST` / `MAIL_PORT` | mail only | SMTP server | `localhost` / `1025` |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | mail only | SMTP credentials | empty |
+| `POSTGRES_HOST_PORT` | local | host port for the compose Postgres | `5432` |
+| `JAVA_OPTS` | optional | JVM flags for the container (`java $JAVA_OPTS -jar ...`) | empty |
+
+### 9. Facebook emulator vs real API
+
+- **`local` / `test`** — `facebook.emulator.enabled=true`. The Facebook Graph API is emulated:
+  sample posts are served and the database is seeded automatically. `POST /api/posts/sync`,
+  `GET /api/posts` and `GET /api/facebook/posts` all work without any Facebook credentials or
+  network access to Facebook.
+- **`prod`** — `facebook.emulator.enabled=false`. The real Graph API is used; `FB_TOKEN` (webhook
+  verify) is required and `FB_PAGE_TOKEN` + `FB_PAGE_ID` are used as the startup fallback when no
+  token is stored in the database yet.
+
+> **Schema migrations (prod):** the `prod` profile uses **Flyway** migrations
+> (`src/main/resources/db/migration`) and `spring.jpa.hibernate.ddl-auto: validate`. Never rely on
+> Hibernate auto-DDL in production — add a new `V<next>__*.sql` migration for schema changes.
+> Existing databases are automatically baselined (`baseline-on-migrate`), so the first deploy
+> requires no manual step.
+>
+> **API key enforcement:** in `prod` requests without a valid `apiKey` header are rejected
+> (`API_KEYS_REQUIRED=true`). Keep the value set — otherwise the API fails closed.
+
+### 10. Troubleshooting
+
+| Problem | Fix |
+| --- | --- |
+| `Failed to configure a DataSource` at startup | No profile / datasource configured. Set `SPRING_PROFILES_ACTIVE=local` (compose/host) or provide `POSTGRES_URL`+credentials. |
+| Backend container restarts / unhealthy | Postgres not ready yet — check `docker compose ps` (Postgres must be `healthy`). |
+| `401 Unauthorized` on every request (prod) | `API_KEYS` is empty or does not match the `apiKey` header the client sends. With `API_KEYS_REQUIRED=true` the API **fails closed**. |
+| Swagger UI 404 | Disabled by design in the `prod` profile. Use `local`. |
+| Tests fail with "Docker environment" error | Docker daemon not running — start Docker Desktop / Docker engine. |
+| Database data gone | `docker compose down -v` wipes the `postgres-data` volume (intentional reset). |
+| `Schema validation failed` / Flyway migration error (prod) | The DB schema does not match the entities. Add a new `V<next>__*.sql` migration instead of relying on `ddl-auto`. |
+| I want to know which commit is deployed | `curl http://localhost:8080/actuator/info` reports the git commit (prod exposes `health` + `info`). |
+
+---
+
+## Continuous Integration / Delivery
+
+The repository ships several GitHub Actions workflows:
+
+- **`.github/workflows/ci.yml`** — the main pipeline:
+  1. **`test`** (every push and PR): full build — unit tests, integration tests against a real
+     Postgres (Testcontainers), **contract tests** that validate HTTP responses against the
+     canonical OpenAPI spec (`src/main/resources/schemas.yml`), and a JaCoCo coverage gate.
+     Reports are uploaded as artifacts.
+  2. **`docker-build-check`** (PR only): builds the Docker image without pushing, so Dockerfile
+     issues are caught before merge.
+  3. **`docker-build`** (push to `master`, after tests pass): builds with Docker layer caching,
+     pushes **immutable** tags (`sha-<commit>` + `latest`) and scans the image with **Trivy**
+     (results land in the GitHub Security tab).
+  4. **`deploy`** (push to `master`): deploys the new tag on the server and runs **smoke tests**
+     against the candidate (actuator health, `GET /api/posts` with the API key, Facebook webhook
+     handshake), then promotes it and verifies the final container health. If any check fails the
+     old container keeps running (rollback by design).
+
+  The pipeline can also be **triggered manually** (`Actions → CI/CD → Run workflow`): pass any
+  existing image tag (e.g. `sha-<old-commit>` or `latest`) to redeploy or **roll back** without
+  touching the code.
+- **`.github/workflows/codeql.yml`** — CodeQL static security analysis on every push/PR and
+  weekly.
+- **`.github/workflows/dependency-review.yml`** — fails PRs that add a dependency with a known
+  high-severity vulnerability.
+
+`Dependabot` keeps Maven and GitHub Actions dependencies up to date.
+
+## Observability (bug hunting)
+
+- Every response carries an `X-Request-Id` header, and the same id is put into the logs
+  (`requestId` MDC field). When something breaks, take the id from the failing HTTP response and
+  `grep` the server logs for it — you get the whole trace of that single request.
+- `GET /actuator/info` (exposed in prod) reports the exact **git commit** that is running, so you
+  always know which version is deployed.
+- In `prod` Swagger UI/OpenAPI docs are disabled and actuator exposes only `health` and `info`.
+  Locally (`local` profile) the health endpoint shows full details and Swagger UI is available
+  at `/swagger-ui.html`.
 
 ## Details
 

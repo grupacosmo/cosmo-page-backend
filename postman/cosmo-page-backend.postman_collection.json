@@ -1,0 +1,443 @@
+{
+  "info": {
+    "_postman_id": "7f8a3c1e-9d4b-4f6a-8e2d-3b0c5a1f9d42",
+    "name": "cosmo-page-backend (local)",
+    "description": "Gotowa kolekcja do ręcznego testowania wszystkich endpointów backendu na profilu `local`.\n\nJak użyć:\n1. Uruchom aplikację lokalnie: `docker compose up -d --build` (albo `mvnw spring-boot:run` z profilem `local`).\n2. Zaimportuj tę kolekcję w Postmanie (Import > wybierz plik).\n3. Klikaj requesty — przykładowe dane są już wypełnione.\n\nWskazówki:\n- `baseUrl` = http://localhost:8080 (zmień, jeśli inny port).\n- Na `local` **API key nie jest wymagany** (`apiKey` zostaw pusty). Gdy testujesz przeciwko `prod`, ustaw `apiKey` na prawdziwy klucz.\n- Endpointy `/api/user*` wymagają nagłówków `user_id` + `access_token` — na `local` działają dowolne wartości (emulator Facebooka).\n- Webhook handshake (`GET /api/facebook/notif`) na `local` używa tokenu `local-webhook-token` (spójnie z profilem `local`).\n- `postId` pobierz z odpowiedzi `GET /api/posts` (posty seedowane mają losowe UUID).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "apiKey", "value": "" },
+    { "key": "fbToken", "value": "local-webhook-token" },
+    { "key": "userId", "value": "cosmo" },
+    { "key": "userAccessToken", "value": "emulated-user-access-token" },
+    { "key": "postId", "value": "" },
+    { "key": "email", "value": "test@example.com" }
+  ],
+  "item": [
+    {
+      "name": "Actuator",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Status aplikacji. Powinno zwrócić {\"status\":\"UP\"}."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Lista postów (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts?page=0&size=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "5" }
+              ]
+            },
+            "description": "Paginowana lista postów. Z odpowiedzi skopiuj `id` pierwszego posta do zmiennej `postId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Post po id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}"]
+            },
+            "description": "Szczegóły posta. Ustaw `postId` (np. z listy postów)."
+          },
+          "response": []
+        },
+        {
+          "name": "Utwórz post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Nowy post\",\n  \"description\": \"Treść nowego posta\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Tworzy post. Zwraca PostModel (201 Created)."
+          },
+          "response": []
+        },
+        {
+          "name": "Aktualizuj post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Zmieniony tytuł\",\n  \"description\": \"Zmieniona treść\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}"]
+            },
+            "description": "Aktualizuje post. `description` jest wymagane (min. 1 znak, max 1000)."
+          },
+          "response": []
+        },
+        {
+          "name": "Usuń post",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{postId}}"]
+            },
+            "description": "Usuwa post po `postId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Sync z Facebookiem",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "sync"]
+            },
+            "description": "Pobiera posty z Facebooka (na `local` z emulatora) i zapisuje nowe. Zwraca 202 Accepted."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Facebook",
+      "item": [
+        {
+          "name": "Zapisz token strony",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"EAA-testowy-token\",\n  \"expiration\": \"2026-12-31T23:59:59\",\n  \"pageId\": \"cosmo_pk_page\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "token"]
+            },
+            "description": "Zapisuje token strony w bazie (201 Created)."
+          },
+          "response": []
+        },
+        {
+          "name": "Konta użytkownika",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/accounts?accessToken=emulated-user-access-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "accounts"],
+              "query": [{ "key": "accessToken", "value": "emulated-user-access-token" }]
+            },
+            "description": "Lista kont z Facebook API (na `local` — dane z emulatora)."
+          },
+          "response": []
+        },
+        {
+          "name": "Posty strony",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "posts"]
+            },
+            "description": "Posty strony z Facebook API (na `local` — dane z emulatora)."
+          },
+          "response": []
+        },
+        {
+          "name": "Szczegóły posta z Facebooka",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/posts/1001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "posts", "1001"]
+            },
+            "description": "Szczegóły pojedynczego posta z Facebook API."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhook",
+      "item": [
+        {
+          "name": "Handshake (verify)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/notif?hub.mode=subscribe&hub.challenge=2137&hub.verify_token={{fbToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "notif"],
+              "query": [
+                { "key": "hub.mode", "value": "subscribe" },
+                { "key": "hub.challenge", "value": "2137" },
+                { "key": "hub.verify_token", "value": "{{fbToken}}" }
+              ]
+            },
+            "description": "Weryfikacja webhooka przez Facebooka. Powinno zwrócić liczbę z `hub.challenge` (2137). Na `local` token to `local-webhook-token`."
+          },
+          "response": []
+        },
+        {
+          "name": "Odbierz notyfikację",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"id\": \"cosmo_pk_page\",\n      \"time\": 1700000000,\n      \"changes\": [\n        {\n          \"field\": \"feed\",\n          \"value\": {\n            \"item\": \"post\",\n            \"post_id\": \"cosmo_pk_page_123\",\n            \"verb\": \"add\",\n            \"message\": \"Nowy wpis przez webhook\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/facebook/notif",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "facebook", "notif"]
+            },
+            "description": "Symuluje webhook od Facebooka (nowy/zmieniony post)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Images",
+      "item": [
+        {
+          "name": "Wyślij obrazki (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "images", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images"]
+            },
+            "description": "Upload obrazków (multipart). W Postmanie wybierz plik w body → form-data → `images` (Select Files)."
+          },
+          "response": []
+        },
+        {
+          "name": "Pobierz obrazek",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "apiKey", "value": "{{apiKey}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/images/{{imageId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images", "{{imageId}}"]
+            },
+            "description": "Zwraca bajty obrazka (image/jpeg). `imageId` weź z odpowiedzi uploadu (pole `id`)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mail",
+      "item": [
+        {
+          "name": "Zapisz mail",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipientEmail\": \"test@example.com\",\n  \"templateName\": \"accountCreate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mail",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mail"]
+            },
+            "description": "Zapisuje rekord maila. Wysyłka właściwa działa tylko, gdy skonfigurowany jest SMTP (na `local` maili możesz szukać w MailHog pod http://localhost:8025)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Utwórz użytkownika",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "user_id", "value": "{{userId}}", "type": "text" },
+              { "key": "access_token", "value": "{{userAccessToken}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"name\": \"Jan\",\n  \"surname\": \"Kowalski\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user"]
+            },
+            "description": "Tworzy użytkownika. Wymaga nagłówków `user_id` i `access_token` (na `local` dowolne wartości — emulator)."
+          },
+          "response": []
+        },
+        {
+          "name": "Użytkownik po email",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "user_id", "value": "{{userId}}", "type": "text" },
+              { "key": "access_token", "value": "{{userAccessToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/{{email}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "{{email}}"]
+            },
+            "description": "Pobiera użytkownika po adresie email."
+          },
+          "response": []
+        },
+        {
+          "name": "Aktualizuj użytkownika",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "user_id", "value": "{{userId}}", "type": "text" },
+              { "key": "access_token", "value": "{{userAccessToken}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"name\": \"Anna\",\n  \"surname\": \"Nowak\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user"]
+            },
+            "description": "Aktualizuje użytkownika. `email` w body jest kluczem wyszukiwania."
+          },
+          "response": []
+        },
+        {
+          "name": "Usuń użytkownika",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "apiKey", "value": "{{apiKey}}", "type": "text" },
+              { "key": "user_id", "value": "{{userId}}", "type": "text" },
+              { "key": "access_token", "value": "{{userAccessToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/{{email}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "{{email}}"]
+            },
+            "description": "Usuwa użytkownika po adresie email."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Privacy",
+      "item": [
+        {
+          "name": "Polityka prywatności",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user-privacy/policy",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user-privacy", "policy"]
+            },
+            "description": "Strona HTML polityki prywatności."
+          },
+          "response": []
+        },
+        {
+          "name": "Regulamin",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user-privacy/terms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user-privacy", "terms"]
+            },
+            "description": "Strona HTML regulaminu."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
