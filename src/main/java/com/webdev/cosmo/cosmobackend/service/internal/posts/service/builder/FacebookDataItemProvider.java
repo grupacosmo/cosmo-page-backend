@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_CACHE_DATA;
-import static com.webdev.cosmo.cosmobackend.util.ThrowableUtils.throwIf;
 
 @Slf4j
 @Component
@@ -30,7 +29,9 @@ public class FacebookDataItemProvider implements Supplier<List<FacebookDataItem>
 
     @Override
     public List<FacebookDataItem> get() {
-        throwIf(!cacheValidator.exists(cache), INVALID_CACHE_DATA.getError());
+        if (!cacheValidator.exists(cache)) {
+            throw INVALID_CACHE_DATA.getError();
+        }
 
         FacebookResponse facebookResponse = facebookClient.getPostsPage(cache.getPageId(), cache.getPageAccessToken(), 100);
         List<FacebookDataItem> facebookDataItems = new ArrayList<>(facebookResponse.getData());
