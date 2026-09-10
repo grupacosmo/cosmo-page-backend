@@ -74,11 +74,28 @@ class UserIT extends BaseTestConfiguration {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void rejectsRequestWithoutUserAuthenticationHeaders() {
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/user/missing@example.com",
+                HttpMethod.GET,
+                new HttpEntity<>(apiKeyOnlyHeaders()),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
     private HttpHeaders authHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("apiKey", API_KEY);
         headers.set("user_id", "cosmo");
         headers.set("access_token", "emulated-user-access-token");
+        return headers;
+    }
+
+    private HttpHeaders apiKeyOnlyHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apiKey", API_KEY);
         return headers;
     }
 }

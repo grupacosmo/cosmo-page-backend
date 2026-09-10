@@ -30,7 +30,8 @@ env:
 
 endpoint:
   secured:
-    - /user
+    - /api/user
+    - /api/user/**
 
 mail:
   host: ${MAIL_HOST:localhost}

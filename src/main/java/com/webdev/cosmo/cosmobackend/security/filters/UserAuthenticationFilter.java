@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -21,6 +22,8 @@ import static java.util.Objects.isNull;
 
 @RequiredArgsConstructor
 public class UserAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
     private final EndpointConfig endpointConfig;
     private final AuthenticationManager customAuthenticationManager;
@@ -54,7 +57,7 @@ public class UserAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isPermitAllEndpoint(String requestURI){
-       return  endpointConfig.getSecured().stream().noneMatch(requestURI::startsWith);
+       return  endpointConfig.getSecured().stream().noneMatch(pattern -> PATH_MATCHER.match(pattern, requestURI));
     }
 
 }
