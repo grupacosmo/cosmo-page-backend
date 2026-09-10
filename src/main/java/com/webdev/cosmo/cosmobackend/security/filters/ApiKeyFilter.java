@@ -2,6 +2,7 @@ package com.webdev.cosmo.cosmobackend.security.filters;
 
 import com.webdev.cosmo.cosmobackend.error.Error;
 import com.webdev.cosmo.cosmobackend.error.ErrorResponseWriter;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,16 +37,30 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             "/actuator/health"
     );
 
+    @PostConstruct
+    void validateConfiguration() {
+        if (apiKeysRequired && !StringUtils.hasText(apiKeys)) {
+            throw new IllegalStateException(
+                    "API keys are required (api-keys-required=true) but no API_KEYS are configured. "
+                            + "The API would fail open without a configured key list.");
+        }
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (!apiKeysRequired || !StringUtils.hasText(apiKeys) || PATHS_TO_BE_SKIPPED.contains(request.getRequestURI())) {
+        if (PATHS_TO_BE_SKIPPED.contains(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!apiKeysRequired) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final String apiKey = request.getHeader("apiKey");
 
-        if (apiKeyValidator.negate().test(apiKey)) {
+        if (!StringUtils.hasText(apiKeys) || apiKeyValidator.negate().test(apiKey)) {
             errorResponseWriter.write(response, Error.INVALID_API_KEY);
             return;
         }
