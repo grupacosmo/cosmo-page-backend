@@ -41,4 +41,18 @@ class FacebookClientEmulatorTest {
         assertThat(token.getAccessToken()).isEqualTo("emulated-page-access-token");
         assertThat(token.getExpiresIn()).isPositive();
     }
+
+    @Test
+    void getPostAttachmentsReturnsMediaForSamplePostsWithImages() {
+        FacebookResponse response = emulator.getPostAttachments("1001", "any");
+
+        assertThat(response.getData()).hasSize(1);
+        assertThat(response.getData().get(0).getMedia().getImage().getSrc()).isNotBlank();
+    }
+
+    @Test
+    void getPostAttachmentsReturnsNoDataForTextOnlyOrUnknownPosts() {
+        assertThat(emulator.getPostAttachments("1003", "any").getData()).isEmpty();
+        assertThat(emulator.getPostAttachments("unknown", "any").getData()).isEmpty();
+    }
 }

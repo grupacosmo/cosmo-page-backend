@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 @Slf4j
@@ -41,7 +42,7 @@ public class UnsavedPostsExtractor implements BiFunction<List<FacebookDataItem>,
             }
 
             return facebookPostImages.size() == post.getFacebookImages().size() && post.getFacebookImages().stream().allMatch( local ->
-                    facebookPostImages.stream().anyMatch(fb -> local.getSrc().equals(fb.getSrc()))
+                    facebookPostImages.stream().anyMatch(fb -> Objects.equals(local.getSrc(), fb.getSrc()))
             );
         })).toList();
     }

@@ -77,7 +77,13 @@ public class FacebookClientEmulator implements FacebookClient {
 
     @Override
     public FacebookResponse getPostAttachments(String postId, String accessToken) {
-        return buildResponse();
+        FacebookPostImage image = sampleImage(postId);
+        if (image == null) {
+            return buildResponse();
+        }
+        return buildResponse(new FacebookDataItem()
+                .id(postId)
+                .media(new FacebookPostMedia().image(image)));
     }
 
     private void ensureCache() {
@@ -101,25 +107,32 @@ public class FacebookClientEmulator implements FacebookClient {
 
     private List<FacebookDataItem> samplePosts() {
         return List.of(
-                new FacebookDataItem()
-                        .id("1001")
-                        .message("Witamy na stronie COSMO PK! Pierwszy przykładowy post.")
-                        .createdTime(java.time.OffsetDateTime.now().minusDays(1))
-                        .media(new FacebookPostMedia().image(
-                                new FacebookPostImage().src("https://picsum.photos/seed/cosmo1/800/600").width(800).height(600)
-                        )),
-                new FacebookDataItem()
-                        .id("1002")
-                        .message("Drugi przykładowy post z obrazkiem.")
-                        .createdTime(java.time.OffsetDateTime.now().minusDays(2))
-                        .media(new FacebookPostMedia().image(
-                                new FacebookPostImage().src("https://picsum.photos/seed/cosmo2/800/600").width(800).height(600)
-                        )),
-                new FacebookDataItem()
-                        .id("1003")
-                        .message("Trzeci przykładowy post — sam tekst.")
-                        .createdTime(java.time.OffsetDateTime.now().minusDays(3))
+                samplePost("1001", "Witamy na stronie COSMO PK! Pierwszy przykładowy post.", 1),
+                samplePost("1002", "Drugi przykładowy post z obrazkiem.", 2),
+                samplePost("1003", "Trzeci przykładowy post — sam tekst.", 3)
         );
+    }
+
+    private FacebookDataItem samplePost(String id, String message, int daysAgo) {
+        FacebookDataItem item = new FacebookDataItem()
+                .id(id)
+                .message(message)
+                .createdTime(java.time.OffsetDateTime.now().minusDays(daysAgo));
+        FacebookPostImage image = sampleImage(id);
+        if (image != null) {
+            item.media(new FacebookPostMedia().image(image));
+        }
+        return item;
+    }
+
+    private FacebookPostImage sampleImage(String postId) {
+        return switch (postId) {
+            case "1001" -> new FacebookPostImage()
+                    .src("https://picsum.photos/seed/cosmo1/800/600").width(800).height(600);
+            case "1002" -> new FacebookPostImage()
+                    .src("https://picsum.photos/seed/cosmo2/800/600").width(800).height(600);
+            default -> null;
+        };
     }
 
     private FacebookResponse buildResponse(FacebookDataItem... items) {
