@@ -14,7 +14,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   IMAGE: cosmopk/cosmo-page-backend
@@ -73,12 +73,14 @@ jobs:
           context: .
           file: Dockerfile
           push: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   docker-build:
     name: Build and push Docker image
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/master' && (github.event.inputs.tag == '' || github.event.inputs.tag == null) }}
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -114,6 +116,8 @@ jobs:
           file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -152,10 +156,11 @@ jobs:
             NEW_TAG="${{ github.event.inputs.tag || format('sha-{0}', github.sha) }}"
             IMAGE="cosmopk/cosmo-page-backend"
 
-            API_KEY=$(grep -E '^API_KEYS=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
+            API_KEY=$(grep -E '^API_KEYS=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs | cut -d, -f1)
             FB_TOKEN=$(grep -E '^FB_TOKEN=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
 
-            echo "Deploying $IMAGE:$NEW_TAG"
+            OLD_TAG=$(docker inspect --format '{{ index .Config.Image }}' cosmo-page-backend 2>/dev/null || true)
+            echo "Deploying $IMAGE:$NEW_TAG (previous image: ${OLD_TAG:-none})"
 
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             docker pull "$IMAGE:$NEW_TAG"
@@ -209,6 +214,17 @@ jobs:
             done
             FINAL_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' cosmo-page-backend 2>/dev/null || true)
             echo "Final health: $FINAL_HEALTH"
-            [ "$FINAL_HEALTH" = "healthy" ] || { docker logs --tail 100 cosmo-page-backend || true; exit 1; }
+            if [ "$FINAL_HEALTH" != "healthy" ]; then
+              docker logs --tail 100 cosmo-page-backend || true
+              echo "Promoted container is unhealthy, rolling back to ${OLD_TAG:-none}..."
+              docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
+              if [ -n "${OLD_TAG:-}" ]; then
+                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+                  --health-interval 5s --health-timeout 5s --health-retries 60 \
+                  --env-file /cosmo/.env-prod "$OLD_TAG"
+              fi
+              exit 1
+            fi
 
-            echo "Deployed $IMAGE:$NEW_TAG (old container kept as $IMAGE:latest for manual rollback)"
+            echo "Deployed $IMAGE:$NEW_TAG (previous image kept in registry as ${OLD_TAG:-none} for manual rollback)"
