@@ -15,7 +15,7 @@ images:
 
 facebook:
   emulator:
-    enabled: true
+    enabled: false
   client-id: ${CLIENT_ID:}
   client-secret: ${CLIENT_SECRET:}
   notif-token: ${FB_TOKEN:}
