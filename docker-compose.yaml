@@ -21,18 +21,6 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  mailhog:
-    image: 'mailhog/mailhog:v1.0.1'
-    restart: unless-stopped
-    ports:
-      - '1025:1025'
-      - '8025:8025'
-    logging:
-      driver: json-file
-      options:
-        max-size: '10m'
-        max-file: '3'
-
   backend:
     build: .
     restart: unless-stopped
@@ -41,8 +29,6 @@ services:
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/cosmo_backend'
       - 'SPRING_DATASOURCE_USERNAME=postgres'
       - 'SPRING_DATASOURCE_PASSWORD=postgres'
-      - 'MAIL_HOST=mailhog'
-      - 'MAIL_PORT=1025'
     ports:
       - '8080:8080'
     depends_on:

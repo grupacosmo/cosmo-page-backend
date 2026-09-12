@@ -313,7 +313,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "mail"]
             },
-            "description": "Zapisuje rekord maila. Wysyłka właściwa działa tylko, gdy skonfigurowany jest SMTP (na `local` maili możesz szukać w MailHog pod http://localhost:8025)."
+            "description": "Zapisuje rekord maila w historii (bez wysyłki). Aplikacja nie wysyła maili."
           },
           "response": []
         }

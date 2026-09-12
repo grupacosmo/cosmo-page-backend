@@ -40,7 +40,7 @@ to do.
 
 ### 1. Local development — full stack via Docker Compose
 
-The fastest way to start. One command runs **Postgres + MailHog + the backend**.
+The fastest way to start. One command runs **Postgres + the backend**.
 
 ```shell
 docker compose up -d --build
@@ -50,7 +50,6 @@ docker compose up -d --build
 | --- | --- |
 | Backend API | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
-| MailHog (local e-mails) | http://localhost:8025 |
 | Postgres | `localhost:5432` (`postgres` / `postgres`, DB `cosmo_backend`) |
 
 - The backend starts with the **`local`** profile: Facebook API is **emulated**, sample posts are
@@ -250,8 +249,6 @@ integration tests.
 | `FB_PAGE_ID` | optional | Facebook page id (startup fallback) | empty |
 | `CLIENT_ID` / `CLIENT_SECRET` | optional | Facebook app credentials | empty |
 | `PROD_URL` | prod | public URL of the API | `http://localhost:8080` |
-| `MAIL_HOST` / `MAIL_PORT` | mail only | SMTP server | `localhost` / `1025` |
-| `MAIL_USERNAME` / `MAIL_PASSWORD` | mail only | SMTP credentials | empty |
 | `POSTGRES_HOST_PORT` | local | host port for the compose Postgres | `5432` |
 | `JAVA_OPTS` | optional | JVM flags for the container (`java $JAVA_OPTS -jar ...`) | empty |
 

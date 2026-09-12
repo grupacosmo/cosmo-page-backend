@@ -28,7 +28,7 @@ touch, modify or create anything in it. Treat its API expectations as a hard con
 SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run    # Linux/macOS
 $env:SPRING_PROFILES_ACTIVE="local"; .\mvnw.cmd spring-boot:run   # Windows
 
-# whole local stack (Postgres + MailHog + backend), no env needed
+# whole local stack (Postgres + backend), no env needed
 docker compose up -d --build
 ```
 
@@ -111,7 +111,7 @@ must stay valid.
 - The webhook handshake (`GET /api/facebook/notif`) echoes `hub.challenge` only when
   `hub.verify_token` matches `facebook.notif-token` (`FB_TOKEN`; defaults to `local-webhook-token`
   in `local`).
-- `MailController` only **saves** mail records (`POST /api/mail`); sending requires an SMTP server.
+- `MailController` only **saves** mail records (`POST /api/mail`); the app has no mail-sending capability (no SMTP).
 - The `/api/user-privacy/*` and `/actuator/health` paths are exempt from the API-key filter.
 
 ## Environment & secrets
