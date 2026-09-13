@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.ServletRequestBindingException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -28,7 +29,7 @@ public class ErrorController {
     }
 
     @ResponseBody
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class, ServletRequestBindingException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class, ServletRequestBindingException.class, HandlerMethodValidationException.class})
     public ResponseEntity<ErrorResponse> badRequest(final Exception e) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

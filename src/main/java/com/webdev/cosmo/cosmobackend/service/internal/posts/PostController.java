@@ -5,6 +5,9 @@ import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostDetailsQ
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostsSyncExecutor;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.UpdatePostService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
@@ -14,10 +17,12 @@ import org.openapitools.model.PostRequest;
 import org.openapitools.model.UpdatePostRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -37,7 +42,7 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PostModel createPost(@RequestBody PostRequest postRequest) {
+    public PostModel createPost(@Valid @RequestBody PostRequest postRequest) {
         return service.createPost(postRequest);
     }
 
@@ -48,13 +53,14 @@ public class PostController {
     }
 
     @GetMapping
-    public Page<PostListQueryItem> getAllPosts(@RequestParam int page, @RequestParam int size) {
+    public Page<PostListQueryItem> getAllPosts(@RequestParam @Min(0) int page,
+                                               @RequestParam @Min(1) @Max(100) int size) {
         return pageablePostsService.findAll(page, size);
     }
 
     @PutMapping("/{postId}")
     public PostModel updatePost(@PathVariable String postId,
-                                @RequestBody UpdatePostRequest updatePostRequest) {
+                                @Valid @RequestBody UpdatePostRequest updatePostRequest) {
         return updatePostService.update(updatePostRequest, postId);
     }
 
