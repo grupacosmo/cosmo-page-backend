@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItemDetails;
 import org.springframework.stereotype.Service;
 
-import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_POST_DATA;
+import static com.webdev.cosmo.cosmobackend.error.Error.POST_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +18,6 @@ public class PostDetailsQueryService {
     public PostListQueryItemDetails findBy(String postId) {
         return postRepository.findById(postId)
                 .map(postMapper::mapPostListQueryItemDetails)
-                .orElseThrow(INVALID_POST_DATA::getError);
+                .orElseThrow(POST_NOT_FOUND::getError);
     }
 }

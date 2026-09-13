@@ -44,6 +44,17 @@ public class PostIT extends BaseTestConfiguration {
     }
 
     @Test
+    void missingPostReturnsNotFound() {
+        ResponseEntity<String> response = testRestTemplate.exchange(
+                "/api/posts/does-not-exist",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders()),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void syncsSamplePostsFromEmulator() {
         ResponseEntity<String> response = testRestTemplate.exchange(
                 "/api/posts/sync",
