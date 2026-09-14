@@ -407,8 +407,6 @@ components:
     Error:
       type: object
       properties:
-        code:
-          type: string
         message:
           type: string
         httpStatus:
@@ -462,6 +460,9 @@ components:
           type: string
         backgroundPhoto:
           $ref: "#/components/schemas/FacebookPostImage"
+      required:
+        - id
+        - description
 
     PostListQueryItemDetails:
       type: object
@@ -476,6 +477,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FacebookPostImage"
+      required:
+        - id
+        - description
+        - images
 
     PostPage:
       type: object
@@ -508,12 +513,14 @@ components:
           type: boolean
       required:
         - content
+        - pageable
         - totalPages
         - totalElements
         - last
         - numberOfElements
         - size
         - number
+        - sort
         - first
         - empty
 
