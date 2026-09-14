@@ -8,6 +8,7 @@ import org.openapitools.model.FacebookDataItem;
 import org.openapitools.model.FacebookPostImage;
 import org.openapitools.model.FacebookPostMedia;
 import org.openapitools.model.FacebookResponse;
+import org.openapitools.model.PostListQueryItemDetails;
 
 import java.util.List;
 
@@ -72,5 +73,23 @@ class PostMapperTest {
 
         assertThat(post.getFacebookImages()).hasSize(1);
         assertThat(post.getFacebookImages().get(0).getSrc()).isEqualTo("http://img2");
+    }
+
+    @Test
+    void detailsImagesComeFromFacebookImagesNotRawImages() {
+        PostMapper mapper = new PostMapperImpl();
+        mapper.facebookImageMapper = new FacebookImageMapperImpl();
+
+        Post post = new Post();
+        post.setId("p1");
+        post.setDescription("desc");
+        post.getFacebookImages().add(new FacebookImage().setSrc("http://img").setWidth(100).setHeight(50));
+
+        PostListQueryItemDetails details = mapper.mapPostListQueryItemDetails(post);
+
+        assertThat(details.getId()).isEqualTo("p1");
+        assertThat(details.getDescription()).isEqualTo("desc");
+        assertThat(details.getImages()).hasSize(1);
+        assertThat(details.getImages().get(0).getSrc()).isEqualTo("http://img");
     }
 }

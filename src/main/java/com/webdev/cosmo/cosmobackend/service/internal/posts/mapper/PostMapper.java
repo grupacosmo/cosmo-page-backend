@@ -32,6 +32,8 @@ public abstract class PostMapper {
     public abstract Post map(PostModel postModel);
 
     public abstract PostListQueryItem mapPostListQueryItem(Post post);
+
+    @Mapping(target = "images", ignore = true)
     public abstract PostListQueryItemDetails mapPostListQueryItemDetails(Post post);
 
     @AfterMapping
