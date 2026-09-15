@@ -12,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openapitools.model.FacebookResponse;
 import org.openapitools.model.LongLivedAccessToken;
 import org.openapitools.model.TokenModel;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,6 +37,7 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
     private final FacebookClient facebookClient;
 
     @Override
+    @Transactional
     public void accept(TokenModel tokenModel) {
         Pair<String, String> pageIdPageTokenPair = retrievePageAccessToken(tokenModel.getToken());
 
