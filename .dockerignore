@@ -3,3 +3,12 @@ target
 .idea
 .env
 *.md
+.mvn
+mvnw
+mvnw.cmd
+.github
+postman
+docs
+scripts
+.editorconfig
+.env.example
