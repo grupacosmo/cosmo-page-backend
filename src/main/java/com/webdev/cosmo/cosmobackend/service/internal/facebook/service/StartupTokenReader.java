@@ -44,7 +44,9 @@ public class StartupTokenReader implements CommandLineRunner {
     }
 
     private Token fromProperties() {
-        if (isNull(pageTokenFromProps) || pageTokenFromProps.isBlank()) {
+        if (pageTokenFromProps == null || pageTokenFromProps.isBlank()
+                || pageIdFromProps == null || pageIdFromProps.isBlank()) {
+            log.warn("FB_PAGE_TOKEN and FB_PAGE_ID must both be set to use the startup fallback; skipping.");
             return new Token();
         }
         return new Token().setValue(pageTokenFromProps).setPageId(pageIdFromProps);
@@ -55,7 +57,7 @@ public class StartupTokenReader implements CommandLineRunner {
             facebookClient.getPostsPage(token.getPageId(), token.getValue(), 1);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Token verification failed for page {}: {}", token.getPageId(), e.getMessage());
             return false;
         }
     }

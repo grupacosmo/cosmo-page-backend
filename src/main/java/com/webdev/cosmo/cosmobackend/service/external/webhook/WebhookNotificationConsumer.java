@@ -11,6 +11,7 @@ import org.openapitools.model.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.WEBHOOK_NOT_SUPPORTED;
@@ -31,7 +32,10 @@ public class WebhookNotificationConsumer implements Consumer<WebhookNotification
 
     @Override
     public void accept(WebhookNotification webhookNotification) {
-        String postId = webhookNotification.getEntry().stream()
+        String postId = Optional.ofNullable(webhookNotification)
+                .map(WebhookNotification::getEntry)
+                .orElse(Collections.emptyList())
+                .stream()
                 .findFirst()
                 .map(Entry::getChanges)
                 .orElse(Collections.emptyList())
@@ -43,6 +47,12 @@ public class WebhookNotificationConsumer implements Consumer<WebhookNotification
                 .orElseThrow(WEBHOOK_NOT_SUPPORTED::getError);
 
         var fbPost = facebookClient.getPostAttachments(postId, cache.getPageAccessToken());
+
+        if (fbPost.getData() == null || fbPost.getData().isEmpty()) {
+            log.warn("Webhook notification for post {} carried no attachment data; nothing to save.", postId);
+            return;
+        }
+
         log.info("Post received after webhook notification: " + fbPost.toString());
         var mappedPost = postMapper.mapPostFromFacebookData(fbPost.getData().get(0));
 

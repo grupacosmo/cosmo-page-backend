@@ -28,9 +28,7 @@ public class FacebookWebhookController {
             @RequestParam("hub.challenge") int challenge,
             @RequestParam("hub.verify_token") String verifyToken
     ) {
-        log.info(verifyToken);
-        log.info(String.valueOf(challenge));
-        log.info(subscribe);
+        log.info("Webhook handshake: subscribe={}", subscribe);
         notifContext.setNotifStrategyRecord(NotifStrategyRecord.init(verifyToken, challenge, subscribe));
 
         return notifStrategy.run(notifContext);

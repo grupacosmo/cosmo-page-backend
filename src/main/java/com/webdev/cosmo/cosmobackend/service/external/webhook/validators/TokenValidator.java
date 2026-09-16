@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_WEBHOOK_VERIFY_TOKEN;
+
 @RequiredArgsConstructor
 public class TokenValidator implements Consumer<NotifContext> {
 
@@ -16,6 +18,6 @@ public class TokenValidator implements Consumer<NotifContext> {
         Optional.ofNullable(notifContext)
                 .map(NotifContext::getToken)
                 .filter(token::equals)
-                .orElseThrow(() -> new RuntimeException("Nie dziala gunwo"));
+                .orElseThrow(INVALID_WEBHOOK_VERIFY_TOKEN::getError);
     }
 }

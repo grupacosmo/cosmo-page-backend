@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.ServletRequestBindingException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -29,11 +32,19 @@ public class ErrorController {
     }
 
     @ResponseBody
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class, ServletRequestBindingException.class, HandlerMethodValidationException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class, ServletRequestBindingException.class, HandlerMethodValidationException.class, MethodArgumentTypeMismatchException.class, MissingPathVariableException.class})
     public ResponseEntity<ErrorResponse> badRequest(final Exception e) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST.value()));
+                .body(new ErrorResponse("Invalid request", HttpStatus.BAD_REQUEST.value()));
+    }
+
+    @ResponseBody
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> methodNotAllowed(final HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new ErrorResponse("Method not allowed", HttpStatus.METHOD_NOT_ALLOWED.value()));
     }
 
     @ResponseBody

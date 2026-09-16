@@ -20,6 +20,7 @@ public enum Error {
     TOKEN_SAVE_ERROR("Error during token save", HttpStatus.BAD_REQUEST),
     NO_ACCESS_TOKEN_OR_USER_ID("No access token or user id", HttpStatus.UNAUTHORIZED),
     INVALID_API_KEY("Invalid api key", HttpStatus.UNAUTHORIZED),
+    INVALID_WEBHOOK_VERIFY_TOKEN("Invalid webhook verify token", HttpStatus.FORBIDDEN),
     WEBHOOK_NOT_SUPPORTED("Value provided in changes is not supported.", HttpStatus.BAD_REQUEST);
 
     private final String message;
