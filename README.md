@@ -189,6 +189,10 @@ Build the image locally:
 docker build -t cosmopk/cosmo-page-backend .
 ```
 
+> The build accepts a `GIT_COMMIT` build-arg (the CI pipeline passes `github.sha`). When set it is
+> baked into `git.properties` so `GET /actuator/info` reports the deployed commit even though the
+> build context contains no `.git` directory. Local builds without the arg report `unknown`.
+
 Run with the `prod` profile (env from a file):
 
 ```shell
@@ -227,7 +231,7 @@ curl http://localhost:8080/actuator/health   # -> {"status":"UP", ...}
 | `local` | local development | `localhost:5432` (`postgres`/`postgres`) | emulated | off (`ddl-auto: update`) | not required | on |
 | `test` | integration tests only | Testcontainers Postgres | emulated | on + `ddl-auto: validate` | required | n/a |
 | `prod` | production | `POSTGRES_URL` env | real | on + `ddl-auto: validate` | **required** | off |
-| *(none)* | manual run with env vars | `POSTGRES_URL` env | emulated by default | off | optional | on |
+| *(none)* | manual run with env vars | `POSTGRES_URL` env | real (emulator off by default) | off | optional | on |
 
 The default/base configuration lives in `application.yml`; profile-specific files are
 `application-local.yml` and `application-prod.yml`. The `test` profile is only used by the
@@ -242,7 +246,7 @@ integration tests.
 | `POSTGRES_USERNAME` | prod | DB user | — |
 | `POSTGRES_PASSWORD` | prod | DB password | — |
 | `API_KEYS` | prod | comma-separated accepted API keys (`apiKey` header) | empty |
-| `API_KEYS_REQUIRED` | — | reject requests without a valid key | `false` (`true` in prod) |
+| `API_KEYS_REQUIRED` | — | reject requests without a valid key; `true` + empty `API_KEYS` fails startup (fail closed) | `false` (`true` in prod) |
 | `CORS_ALLOWED_ORIGINS` | — | comma-separated allowed origins | `http://localhost:4200,https://cosmopk.pl` |
 | `FB_TOKEN` | prod | Facebook webhook verify token | empty |
 | `FB_PAGE_TOKEN` | optional | page access token (startup fallback) | empty |
@@ -257,7 +261,8 @@ integration tests.
 - **`local` / `test`** — `facebook.emulator.enabled=true`. The Facebook Graph API is emulated:
   sample posts are served and the database is seeded automatically. `POST /api/posts/sync`,
   `GET /api/posts` and `GET /api/facebook/posts` all work without any Facebook credentials or
-  network access to Facebook.
+  network access to Facebook. The emulator is **opt-in**: the base config disables it, so any
+  profile that does not explicitly enable it uses the real client.
 - **`prod`** — `facebook.emulator.enabled=false`. The real Graph API is used; `FB_TOKEN` (webhook
   verify) is required and `FB_PAGE_TOKEN` + `FB_PAGE_ID` are used as the startup fallback when no
   token is stored in the database yet.
@@ -269,7 +274,8 @@ integration tests.
 > requires no manual step.
 >
 > **API key enforcement:** in `prod` requests without a valid `apiKey` header are rejected
-> (`API_KEYS_REQUIRED=true`). Keep the value set — otherwise the API fails closed.
+> (`API_KEYS_REQUIRED=true`). If the key list is empty while enforcement is on, the application
+> refuses to start — the API fails closed instead of silently accepting every request.
 
 ### 10. Troubleshooting
 
@@ -277,7 +283,9 @@ integration tests.
 | --- | --- |
 | `Failed to configure a DataSource` at startup | No profile / datasource configured. Set `SPRING_PROFILES_ACTIVE=local` (compose/host) or provide `POSTGRES_URL`+credentials. |
 | Backend container restarts / unhealthy | Postgres not ready yet — check `docker compose ps` (Postgres must be `healthy`). |
-| `401 Unauthorized` on every request (prod) | `API_KEYS` is empty or does not match the `apiKey` header the client sends. With `API_KEYS_REQUIRED=true` the API **fails closed**. |
+| `401 Unauthorized` on every request (prod) | `API_KEYS` does not match the `apiKey` header the client sends. |
+| App refuses to start with *"API keys are required but no API_KEYS are configured"* | `API_KEYS_REQUIRED=true` with an empty `API_KEYS` — the fail-closed guard rejects this; provide the key list. |
+| `401` on `/api/user...` even with a valid `apiKey` | The `user_id` and `access_token` headers are missing or rejected (Facebook user authentication). |
 | Swagger UI 404 | Disabled by design in the `prod` profile. Use `local`. |
 | Tests fail with "Docker environment" error | Docker daemon not running — start Docker Desktop / Docker engine. |
 | Database data gone | `docker compose down -v` wipes the `postgres-data` volume (intentional reset). |
@@ -302,12 +310,14 @@ The repository ships several GitHub Actions workflows:
      (results land in the GitHub Security tab).
   4. **`deploy`** (push to `master`): deploys the new tag on the server and runs **smoke tests**
      against the candidate (actuator health, `GET /api/posts` with the API key, Facebook webhook
-     handshake), then promotes it and verifies the final container health. If any check fails the
-     old container keeps running (rollback by design).
+     handshake), then promotes it and verifies the final container health. If the promoted
+     container does not become healthy, the previous image is started again automatically
+     (rollback by design). Smoke tests use the first key from `API_KEYS`, so the check works even
+     when several keys are configured.
 
-  The pipeline can also be **triggered manually** (`Actions → CI/CD → Run workflow`): pass any
-  existing image tag (e.g. `sha-<old-commit>` or `latest`) to redeploy or **roll back** without
-  touching the code.
+  The pipeline can also be **triggered manually** (`Actions → CI/CD → Run workflow`): pass an
+  existing image tag (e.g. `sha-<old-commit>`) to redeploy or **roll back** a specific version
+  without touching the code or moving the `latest` tag.
 - **`.github/workflows/codeql.yml`** — CodeQL static security analysis on every push/PR and
   weekly.
 - **`.github/workflows/dependency-review.yml`** — fails PRs that add a dependency with a known
