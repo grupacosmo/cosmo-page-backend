@@ -49,7 +49,7 @@ public class WebhookNotificationConsumer implements Consumer<WebhookNotification
         FacebookResponse fbPostDetails = facebookClient.getPostDetails(postId, cache.getPageAccessToken());
 
         if (fbPostDetails.getData() == null || fbPostDetails.getData().isEmpty()) {
-            log.warn("Webhook notification for post {} returned no details; nothing to save.", postId);
+            log.warn("Webhook notification carried no post details; nothing to save.");
             return;
         }
 
@@ -60,8 +60,8 @@ public class WebhookNotificationConsumer implements Consumer<WebhookNotification
                 .orElseGet(() -> postMapper.mapPostFromFacebookData(postData));
         post = postMapper.mapPostFromFacebookData(Pair.of(postData, attachments), post);
 
-        log.info("Post received after webhook notification: {}", post);
+        log.info("Post received after webhook notification.");
         postRepository.save(post);
-        log.info("Successfully saved post {}", post);
+        log.info("Successfully saved post after webhook notification.");
     }
 }
