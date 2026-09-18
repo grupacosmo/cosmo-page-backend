@@ -325,6 +325,75 @@ The repository ships several GitHub Actions workflows:
 
 `Dependabot` keeps Maven and GitHub Actions dependencies up to date.
 
+### One-time setup: server + repository secrets
+
+The `docker-build` and `deploy` jobs only run on pushes to `master`. Before the first deploy,
+the following must be configured once — otherwise those jobs will fail.
+
+**1. Server prerequisites**
+
+The deploy script assumes a plain Linux server with:
+
+- **Docker** installed (`docker`, `docker login`, `docker run` used by the deploy script).
+- A **Postgres** instance reachable from the server (connection details go into `.env-prod`).
+- Ports **8080** (main app) and **8081** (candidate during blue-green deploy) free and open.
+
+**2. Env file `/cosmo/.env-prod` on the server**
+
+The deploy script runs the container with `--env-file /cosmo/.env-prod`, so this file must exist
+and contain at least the production variables from [section 8](#8-environment-variables):
+
+```shell
+SPRING_PROFILES_ACTIVE=prod
+POSTGRES_URL=jdbc:postgresql://<host>:5432/cosmo_backend
+POSTGRES_USERNAME=...
+POSTGRES_PASSWORD=...
+API_KEYS=key1,key2
+API_KEYS_REQUIRED=true
+FB_TOKEN=...
+FB_PAGE_TOKEN=...        # optional if the token is stored via POST /api/facebook/token
+FB_PAGE_ID=...
+CORS_ALLOWED_ORIGINS=https://cosmopk.pl
+PROD_URL=https://cosmopk.pl
+```
+
+The smoke tests read `API_KEYS` (first key) and `FB_TOKEN` directly from this file
+(`grep` on `/cosmo/.env-prod`), so make sure both are present. The file is only read on the
+server and is never committed to the repository.
+
+**3. GitHub Actions secrets**
+
+Create these under `Settings → Secrets and variables → Actions` of the repository:
+
+| Secret | Used for | Notes |
+| --- | --- | --- |
+| `DOCKERHUB_USERNAME` | `docker login` (push + pull of the image) | Docker Hub account |
+| `DOCKERHUB_TOKEN` | `docker login` | access token, not the account password |
+| `SERVER_HOST` | SSH target host of the deploy job | e.g. `cosmo.example.com` |
+| `SERVER_USER` | SSH user | must be able to run `docker` commands |
+| `SERVER_KEY` | SSH private key for GitHub Actions | see below |
+
+**4. SSH key for GitHub Actions**
+
+The helper script [`scripts/key-config.sh`](./scripts/key-config.sh) generates a dedicated SSH key
+pair, installs the public part on the server (`authorized_keys`) and leaves the private key at
+`~/.ssh/github-actions`:
+
+```shell
+./scripts/key-config.sh <user>@<server-host> your-email@example.com
+```
+
+Then paste the **private key** as the `SERVER_KEY` secret. The user must have permission to run
+`docker` (e.g. member of the `docker` group) because the deploy script logs into Docker Hub and
+manages containers directly.
+
+**5. First deploy**
+
+Everything above in place, simply push to `master`. The pipeline runs
+`test → docker-build → deploy`; if the promoted container fails its health check, the previous
+image is restarted automatically. To (re)deploy a specific version later, use
+`Actions → CI/CD → Run workflow` with a `tag` input (e.g. `sha-<commit>`).
+
 ## Observability (bug hunting)
 
 - Every response carries an `X-Request-Id` header, and the same id is put into the logs
