@@ -12,7 +12,8 @@
     { "key": "userId", "value": "cosmo" },
     { "key": "userAccessToken", "value": "emulated-user-access-token" },
     { "key": "postId", "value": "" },
-    { "key": "email", "value": "test@example.com" }
+    { "key": "email", "value": "test@example.com" },
+    { "key": "imageId", "value": "" }
   ],
   "item": [
     {
@@ -154,7 +155,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"EAA-testowy-token\",\n  \"expiration\": \"2026-12-31T23:59:59\",\n  \"pageId\": \"cosmo_pk_page\"\n}"
+              "raw": "{\n  \"token\": \"EAA-testowy-token\",\n  \"expiration\": \"2026-12-31T23:59:59Z\",\n  \"pageId\": \"cosmo_pk_page\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/facebook/token",

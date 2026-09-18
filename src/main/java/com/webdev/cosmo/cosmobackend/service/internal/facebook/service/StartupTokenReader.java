@@ -36,8 +36,7 @@ public class StartupTokenReader implements CommandLineRunner {
 
         if (verifyToken(token)) {
             log.info("Successfully verified token. Setting up cache.");
-            cache.setPageAccessToken(token.getValue());
-            cache.setPageId(token.getPageId());
+            cache.update(token.getValue(), token.getPageId());
         } else {
             log.error("Error during token verification. Please provide valid one.");
         }

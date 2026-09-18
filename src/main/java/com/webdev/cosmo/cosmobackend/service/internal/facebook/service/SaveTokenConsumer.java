@@ -61,8 +61,7 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
         tokenRepository.save(token);
 
         log.info("Overriding token in cache.");
-        cache.setPageAccessToken(tokenModel.getToken());
-        cache.setPageId(tokenModel.getPageId());
+        cache.update(tokenModel.getToken(), tokenModel.getPageId());
     }
 
     private Pair<String, String> retrievePageAccessToken(String token) {

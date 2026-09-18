@@ -3,6 +3,7 @@ package com.webdev.cosmo.cosmobackend.service.external.webhook;
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.mapper.PostMapper;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,22 +42,26 @@ public class WebhookNotificationConsumer implements Consumer<WebhookNotification
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(Change::getValue)
-                .map(Value::getFrom)
-                .map(From::getId)
+                .map(Value::getPostId)
                 .findFirst()
                 .orElseThrow(WEBHOOK_NOT_SUPPORTED::getError);
 
-        var fbPost = facebookClient.getPostAttachments(postId, cache.getPageAccessToken());
+        FacebookResponse fbPostDetails = facebookClient.getPostDetails(postId, cache.getPageAccessToken());
 
-        if (fbPost.getData() == null || fbPost.getData().isEmpty()) {
-            log.warn("Webhook notification for post {} carried no attachment data; nothing to save.", postId);
+        if (fbPostDetails.getData() == null || fbPostDetails.getData().isEmpty()) {
+            log.warn("Webhook notification for post {} returned no details; nothing to save.", postId);
             return;
         }
 
-        log.info("Post received after webhook notification: " + fbPost.toString());
-        var mappedPost = postMapper.mapPostFromFacebookData(fbPost.getData().get(0));
+        FacebookDataItem postData = fbPostDetails.getData().get(0);
+        FacebookResponse attachments = facebookClient.getPostAttachments(postId, cache.getPageAccessToken());
 
-        postRepository.save(mappedPost);
-        log.info("Successfully saved post" + mappedPost);
+        Post post = postRepository.findByProviderId(postData.getId())
+                .orElseGet(() -> postMapper.mapPostFromFacebookData(postData));
+        post = postMapper.mapPostFromFacebookData(Pair.of(postData, attachments), post);
+
+        log.info("Post received after webhook notification: {}", post);
+        postRepository.save(post);
+        log.info("Successfully saved post {}", post);
     }
 }

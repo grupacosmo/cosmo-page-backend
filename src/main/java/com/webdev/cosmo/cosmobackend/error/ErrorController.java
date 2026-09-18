@@ -34,6 +34,7 @@ public class ErrorController {
     @ResponseBody
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class, ServletRequestBindingException.class, HandlerMethodValidationException.class, MethodArgumentTypeMismatchException.class, MissingPathVariableException.class})
     public ResponseEntity<ErrorResponse> badRequest(final Exception e) {
+        log.debug("Bad request: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("Invalid request", HttpStatus.BAD_REQUEST.value()));
@@ -42,6 +43,7 @@ public class ErrorController {
     @ResponseBody
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> methodNotAllowed(final HttpRequestMethodNotSupportedException e) {
+        log.debug("Method not allowed: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new ErrorResponse("Method not allowed", HttpStatus.METHOD_NOT_ALLOWED.value()));
@@ -50,6 +52,7 @@ public class ErrorController {
     @ResponseBody
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(final NoResourceFoundException e) {
+        log.debug("Resource not found: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse("Resource not found", HttpStatus.NOT_FOUND.value()));

@@ -87,8 +87,7 @@ public class FacebookClientEmulator implements FacebookClient {
     }
 
     private void ensureCache() {
-        cache.setPageId(PAGE_ID);
-        cache.setPageAccessToken(EMULATED_TOKEN);
+        cache.update(EMULATED_TOKEN, PAGE_ID);
     }
 
     private FacebookDataItem pageItem() {

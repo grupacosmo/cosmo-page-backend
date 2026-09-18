@@ -137,7 +137,7 @@ jobs:
 
   deploy:
     name: Deploy to server with smoke tests and rollback
-    if: ${{ (github.ref == 'refs/heads/master' && needs.docker-build.result == 'success') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ always() && ((github.ref == 'refs/heads/master' && needs.docker-build.result == 'success') || github.event_name == 'workflow_dispatch') }}
     needs: docker-build
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -162,7 +162,7 @@ jobs:
             OLD_TAG=$(docker inspect --format '{{ index .Config.Image }}' cosmo-page-backend 2>/dev/null || true)
             echo "Deploying $IMAGE:$NEW_TAG (previous image: ${OLD_TAG:-none})"
 
-            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker pull "$IMAGE:$NEW_TAG"
 
             docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
@@ -199,10 +199,20 @@ jobs:
 
             echo "Smoke tests passed, promoting candidate..."
             docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
-            docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+            if ! docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
               --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
               --health-interval 5s --health-timeout 5s --health-retries 60 \
-              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"
+              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"; then
+              echo "Promotion failed; restoring previous image ${OLD_TAG:-none}..."
+              if [ -n "${OLD_TAG:-}" ]; then
+                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+                  --health-interval 5s --health-timeout 5s --health-retries 60 \
+                  --env-file /cosmo/.env-prod "$OLD_TAG"
+              fi
+              docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+              exit 1
+            fi
             docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
 
             echo "Verifying promoted container health..."

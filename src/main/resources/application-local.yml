@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:-5432}/cosmo_backend
+    url: jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:5432}/cosmo_backend
     username: postgres
     password: postgres
   jackson:
