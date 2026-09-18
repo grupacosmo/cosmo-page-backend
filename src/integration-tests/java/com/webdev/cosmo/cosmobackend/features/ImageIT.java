@@ -29,6 +29,7 @@ public class ImageIT extends BaseTestConfiguration {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.set("apiKey", "test-api-key");
 
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);

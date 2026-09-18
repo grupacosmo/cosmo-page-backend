@@ -2,7 +2,7 @@
 <configuration>
 
     <property name="APP_BASE_PACKAGE" value="com.webdev.cosmo.cosmobackend" />
-    <property name="LOG_PATTERN" value="%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %logger{36} - %msg%n"/>
+    <property name="LOG_PATTERN" value="%highlight(%-5level) %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %X{requestId:-} %logger{36} - %msg%n"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

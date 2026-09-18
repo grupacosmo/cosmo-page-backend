@@ -1,11 +1,11 @@
 package com.webdev.cosmo.cosmobackend.service.user;
 
 import com.webdev.cosmo.cosmobackend.service.api.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.openapitools.model.UserModel;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -16,7 +16,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public UserModel postUser(@RequestBody User user){
+    public UserModel postUser(@Valid @RequestBody User user){
         return userService.save(user);
     }
 
@@ -26,15 +26,13 @@ public class UserController {
     }
 
     @PutMapping
-    public UserModel updateUser(@RequestBody User user){
+    public UserModel updateUser(@Valid @RequestBody User user){
         return userService.updateUser(user);
     }
 
     @DeleteMapping(value ="{email}")
     public Map<String, String> deleteUser(@PathVariable String email){
          userService.deleteByEmail(email);
-        return new HashMap<>() {{
-            put("email", email);
-        }};
+        return Map.of("email", email);
     }
 }

@@ -32,8 +32,7 @@ build/
 .vscode/
 
 ### MAVEN ###
-.mvn
-mvnw*
+.mvn/wrapper/maven-wrapper.jar
 
 ### CUSTOM ###
 .env

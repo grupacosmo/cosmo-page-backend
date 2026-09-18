@@ -5,7 +5,6 @@ import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.mapper.TokenMapper;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.repository.TokenRepository;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
-import com.webdev.cosmo.cosmobackend.util.BetterOptional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -13,13 +12,17 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openapitools.model.FacebookResponse;
 import org.openapitools.model.LongLivedAccessToken;
 import org.openapitools.model.TokenModel;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 import static com.webdev.cosmo.cosmobackend.error.Error.INVALID_ACCESS_TOKEN;
-import static com.webdev.cosmo.cosmobackend.error.Error.TOKEN_SAVE_ERROR;
 
+/**
+ * Replaces the stored page token with a long-lived one obtained from the Facebook
+ * exchange endpoint and refreshes the in-memory cache.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class SaveTokenConsumer implements Consumer<TokenModel> {
@@ -34,6 +37,7 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
     private final FacebookClient facebookClient;
 
     @Override
+    @Transactional
     public void accept(TokenModel tokenModel) {
         Pair<String, String> pageIdPageTokenPair = retrievePageAccessToken(tokenModel.getToken());
 
@@ -49,17 +53,15 @@ public class SaveTokenConsumer implements Consumer<TokenModel> {
         tokenRepository.deleteAll();
         log.info("Deleted tokens: {}. Attempting to save new token", existingTokens.size());
 
-        BetterOptional.of(tokenModel)
-                .peek(model -> model.setPageId(pageIdPageTokenPair.getLeft()))
-                .peek(model -> model.setToken(longLivedToken.getAccessToken()))
-                .optionalMap(tokenMapper::map)
-                .map(token -> token.setValidityPeriod(longLivedToken.getExpiresIn().toString()))
-                .map(tokenRepository::save)
-                .orElseThrow(TOKEN_SAVE_ERROR::getError);
+        tokenModel.setPageId(pageIdPageTokenPair.getLeft());
+        tokenModel.setToken(longLivedToken.getAccessToken());
+
+        Token token = tokenMapper.map(tokenModel);
+        token.setValidityPeriod(longLivedToken.getExpiresIn().toString());
+        tokenRepository.save(token);
 
         log.info("Overriding token in cache.");
-        cache.setPageAccessToken(tokenModel.getToken());
-        cache.setPageId(tokenModel.getPageId());
+        cache.update(tokenModel.getToken(), tokenModel.getPageId());
     }
 
     private Pair<String, String> retrievePageAccessToken(String token) {

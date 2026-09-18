@@ -6,63 +6,21 @@ import com.webdev.cosmo.cosmobackend.service.internal.facebook.repository.TokenR
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.SaveTokenConsumer;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.StartupTokenReader;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.TokenSupplier;
-import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.AccessTokenRefreshJob;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
 import org.openapitools.model.TokenModel;
-import org.quartz.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Configuration
 public class FacebookConfig {
 
-    public static final String ACCESS_TOKEN_REFRESH_JOB = "AccessTokenRefreshJob";
-    public static final String ACCESS_TOKEN_REFRESH_TRIGGER = "AccessTokenRefreshTrigger";
-
-//    @Bean
-//    public QuartzJobBean accessTokenRefreshJob(
-//            final PageTokenService pageTokenService
-//    ) {
-//        return new AccessTokenRefreshJob(pageTokenService);
-//    }
-//
-//    @Bean
-//    public PageTokenService accessTokenService(
-//            @Value("${facebook.client-id}") final String clientId,
-//            @Value("${facebook.client-secret}") final String clientSecret,
-//            final FacebookClient facebookClient
-//            ) {
-//        return new PageTokenService(clientId, clientSecret, facebookClient);
-//    }
-
     @Bean
-    public JobDetail accessTokenRefreshJobDetail() {
-        return JobBuilder.newJob(AccessTokenRefreshJob.class)
-                .withIdentity(ACCESS_TOKEN_REFRESH_JOB)
-                .storeDurably()
-                .build();
-    }
-
-    @Bean
-    public Trigger accessTokenRefreshTrigger(JobDetail accessTokenRefreshJobDetail) {
-        return TriggerBuilder.newTrigger()
-                .forJob(accessTokenRefreshJobDetail)
-                .withIdentity(ACCESS_TOKEN_REFRESH_TRIGGER)
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                        .repeatForever()
-                        .withIntervalInHours(10)
-                )
-                .build();
-    }
-
-    @Bean
-    public Consumer<TokenModel> saveTokenConsumer(
+    public SaveTokenConsumer saveTokenConsumer(
             @Value("${facebook.client-id}") final String clientId,
             @Value("${facebook.client-secret}") final String clientSecret,
             final TokenRepository tokenRepository,
@@ -82,9 +40,11 @@ public class FacebookConfig {
     public CommandLineRunner startupTokenReader(
             final Supplier<Token> tokenSupplier,
             final FacebookClient facebookClient,
-            final Cache cache
+            final Cache cache,
+            @Value("${facebook.page-token:}") final String pageTokenFromProps,
+            @Value("${facebook.page-id:}") final String pageIdFromProps
     ) {
-        return new StartupTokenReader(tokenSupplier, facebookClient, cache);
+        return new StartupTokenReader(tokenSupplier, facebookClient, cache, pageTokenFromProps, pageIdFromProps);
     }
 
     @Bean

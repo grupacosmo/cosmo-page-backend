@@ -1,30 +1,37 @@
 package com.webdev.cosmo.cosmobackend.service.internal.posts;
 
-import com.webdev.cosmo.cosmobackend.service.internal.posts.model.Post;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PageablePostsService;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostDetailsQueryService;
 import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostService;
-import com.webdev.cosmo.cosmobackend.util.interfaces.*;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.PostsSyncExecutor;
+import com.webdev.cosmo.cosmobackend.service.internal.posts.service.UpdatePostService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.PostListQueryItem;
 import org.openapitools.model.PostListQueryItemDetails;
 import org.openapitools.model.PostModel;
+import org.openapitools.model.PostRequest;
 import org.openapitools.model.UpdatePostRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
     private final PostService service;
-    private final UpdateService<UpdatePostRequest, PostModel, String> updatePostService;
-    private final Executor postsSyncExecutor;
-    private final PageableQueryService<PostListQueryItem> pageablePostsService;
-    private final SimpleQueryService<String, PostListQueryItemDetails> postDetailsQueryService;
+    private final UpdatePostService updatePostService;
+    private final PostsSyncExecutor postsSyncExecutor;
+    private final PageablePostsService pageablePostsService;
+    private final PostDetailsQueryService postDetailsQueryService;
 
 
     @PutMapping("/sync")
@@ -35,8 +42,8 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PostModel createPost(@RequestBody Post post) {
-        return service.createPost(post);
+    public PostModel createPost(@Valid @RequestBody PostRequest postRequest) {
+        return service.createPost(postRequest);
     }
 
     @GetMapping("/{postId}")
@@ -46,21 +53,20 @@ public class PostController {
     }
 
     @GetMapping
-    public Page<PostListQueryItem> getAllPosts(@RequestParam int page, @RequestParam int size) {
+    public Page<PostListQueryItem> getAllPosts(@RequestParam @Min(0) int page,
+                                               @RequestParam @Min(1) @Max(100) int size) {
         return pageablePostsService.findAll(page, size);
     }
 
     @PutMapping("/{postId}")
     public PostModel updatePost(@PathVariable String postId,
-                                @RequestBody UpdatePostRequest updatePostRequest) {
+                                @Valid @RequestBody UpdatePostRequest updatePostRequest) {
         return updatePostService.update(updatePostRequest, postId);
     }
 
     @DeleteMapping("/{postId}")
     public Map<String, String> deletePost(@PathVariable String postId) {
         service.deletePost(postId);
-        return new HashMap<>() {{
-            put("id", postId);
-        }};
+        return Map.of("id", postId);
     }
 }

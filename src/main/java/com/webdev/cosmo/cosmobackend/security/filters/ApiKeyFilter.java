@@ -1,18 +1,19 @@
 package com.webdev.cosmo.cosmobackend.security.filters;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.webdev.cosmo.cosmobackend.error.Error;
+import com.webdev.cosmo.cosmobackend.error.ErrorResponseWriter;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -21,31 +22,46 @@ import java.util.function.Predicate;
 public class ApiKeyFilter extends OncePerRequestFilter {
 
     private final Predicate<String> apiKeyValidator;
+    private final ErrorResponseWriter errorResponseWriter;
+
+    @Value("${env.api-keys:}")
+    private String apiKeys;
+
+    @Value("${env.api-keys-required:false}")
+    private boolean apiKeysRequired;
 
     private static final List<String> PATHS_TO_BE_SKIPPED = List.of(
             "/api/facebook/notif",
             "/api/user-privacy/terms",
-            "/api/user-privacy/policy"
+            "/api/user-privacy/policy",
+            "/actuator/health"
     );
+
+    @PostConstruct
+    void validateConfiguration() {
+        if (apiKeysRequired && !StringUtils.hasText(apiKeys)) {
+            throw new IllegalStateException(
+                    "API keys are required (api-keys-required=true) but no API_KEYS are configured. "
+                            + "The API would fail open without a configured key list.");
+        }
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (PATHS_TO_BE_SKIPPED.contains(request.getRequestURI())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!apiKeysRequired) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String apiKey = request.getHeader("apiKey");
 
-        if(!PATHS_TO_BE_SKIPPED.contains(request.getRequestURI()) && apiKeyValidator.negate().test(apiKey)){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            Error errorResponse = Error.INVALID_API_KEY;
-
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(Error.class, new Error.Serializer())
-                    .create();
-
-            String jsonErrorResponse = gson.toJson(errorResponse);
-
-            PrintWriter writer = response.getWriter();
-            writer.print(jsonErrorResponse);
-            writer.flush();
+        if (!StringUtils.hasText(apiKeys) || apiKeyValidator.negate().test(apiKey)) {
+            errorResponseWriter.write(response, Error.INVALID_API_KEY);
             return;
         }
 

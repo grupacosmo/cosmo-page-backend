@@ -1,0 +1,240 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to deploy (e.g. sha-<commit> or latest). Leave empty to deploy the current commit.'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: cosmopk/cosmo-page-backend
+
+jobs:
+  test:
+    name: Build, unit tests, integration tests, contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and run all tests (unit + IT + contracts + coverage)
+        run: ./mvnw --no-transfer-progress --batch-mode clean verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports
+            target/failsafe-reports
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+
+  docker-build-check:
+    name: Validate Docker image build
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-build:
+    name: Build and push Docker image
+    if: ${{ github.ref == 'refs/heads/master' && (github.event.inputs.tag == '' || github.event.inputs.tag == null) }}
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Compute image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long,prefix=sha-
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+  deploy:
+    name: Deploy to server with smoke tests and rollback
+    if: ${{ always() && ((github.ref == 'refs/heads/master' && needs.docker-build.result == 'success') || github.event_name == 'workflow_dispatch') }}
+    needs: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+
+            NEW_TAG="${{ github.event.inputs.tag || format('sha-{0}', github.sha) }}"
+            IMAGE="cosmopk/cosmo-page-backend"
+
+            API_KEY=$(grep -E '^API_KEYS=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs | cut -d, -f1)
+            FB_TOKEN=$(grep -E '^FB_TOKEN=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
+
+            OLD_TAG=$(docker inspect --format '{{ index .Config.Image }}' cosmo-page-backend 2>/dev/null || true)
+            echo "Deploying $IMAGE:$NEW_TAG (previous image: ${OLD_TAG:-none})"
+
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            docker pull "$IMAGE:$NEW_TAG"
+
+            docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+            docker run -d --name cosmo-page-backend-new --restart unless-stopped -p 8081:8080 \
+              --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+              --health-interval 5s --health-timeout 5s --health-retries 60 \
+              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"
+
+            smoke_failed() {
+              echo "Smoke test failed: $1"
+              docker logs --tail 100 cosmo-page-backend-new || true
+              docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+              exit 1
+            }
+
+            HEALTH=""
+            for i in $(seq 1 60); do
+              HEALTH=$(curl -s http://localhost:8081/actuator/health || true)
+              if echo "$HEALTH" | grep -q '"UP"'; then
+                break
+              fi
+              sleep 2
+            done
+            echo "Health: $HEALTH"
+            echo "$HEALTH" | grep -q '"UP"' || smoke_failed "actuator health is not UP"
+
+            POSTS_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "apiKey: $API_KEY" "http://localhost:8081/api/posts?page=0&size=5")
+            echo "GET /api/posts status: $POSTS_STATUS"
+            [ "$POSTS_STATUS" = "200" ] || smoke_failed "posts endpoint returned $POSTS_STATUS"
+
+            CHALLENGE=$(curl -s "http://localhost:8081/api/facebook/notif?hub.mode=subscribe&hub.challenge=2137&hub.verify_token=$FB_TOKEN")
+            echo "Webhook handshake challenge: $CHALLENGE"
+            [ "$CHALLENGE" = "2137" ] || smoke_failed "webhook handshake returned $CHALLENGE"
+
+            echo "Smoke tests passed, promoting candidate..."
+            docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
+            if ! docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+              --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+              --health-interval 5s --health-timeout 5s --health-retries 60 \
+              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"; then
+              echo "Promotion failed; restoring previous image ${OLD_TAG:-none}..."
+              if [ -n "${OLD_TAG:-}" ]; then
+                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+                  --health-interval 5s --health-timeout 5s --health-retries 60 \
+                  --env-file /cosmo/.env-prod "$OLD_TAG"
+              fi
+              docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+              exit 1
+            fi
+            docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+
+            echo "Verifying promoted container health..."
+            for i in $(seq 1 30); do
+              if docker inspect -f '{{.State.Health.Status}}' cosmo-page-backend 2>/dev/null | grep -q healthy; then
+                break
+              fi
+              sleep 2
+            done
+            FINAL_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' cosmo-page-backend 2>/dev/null || true)
+            echo "Final health: $FINAL_HEALTH"
+            if [ "$FINAL_HEALTH" != "healthy" ]; then
+              docker logs --tail 100 cosmo-page-backend || true
+              echo "Promoted container is unhealthy, rolling back to ${OLD_TAG:-none}..."
+              docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
+              if [ -n "${OLD_TAG:-}" ]; then
+                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
+                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
+                  --health-interval 5s --health-timeout 5s --health-retries 60 \
+                  --env-file /cosmo/.env-prod "$OLD_TAG"
+              fi
+              exit 1
+            fi
+
+            echo "Deployed $IMAGE:$NEW_TAG (previous image kept in registry as ${OLD_TAG:-none} for manual rollback)"

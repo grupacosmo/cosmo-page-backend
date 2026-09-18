@@ -7,12 +7,12 @@ import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FacebookNotifFactory {
-    private static final String NOTIF_URL = "/facebook/notif";
+    private static final String NOTIF_URL = "/api/facebook/notif";
 
     public static String buildUrl(final Integer challengeToken) {
         return NOTIF_URL.concat(UrlParamFactory.buildParams(Map.of(
                 "hub.mode", "subscribe",
-                "hub.verify_token", "dupa123",
+                "hub.verify_token", "test-webhook-token",
                 "hub.challenge", String.valueOf(challengeToken)
                 )));
     }

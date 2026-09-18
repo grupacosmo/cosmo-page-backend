@@ -14,6 +14,8 @@ import org.springframework.security.core.AuthenticationException;
 @AllArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
+    private static final String USER_FIELDS = "id,name,email,picture";
+
     private final FacebookClient facebookClient;
     private final FacebookAuthenticationMapper facebookAuthenticationMapper;
 
@@ -21,7 +23,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
         try {
-            FacebookUser facebookResponse = facebookClient.verifyToken((String) authentication.getPrincipal(), (String) authentication.getCredentials(), "id,name,email,picture");
+            FacebookUser facebookResponse = facebookClient.verifyToken((String) authentication.getPrincipal(), (String) authentication.getCredentials(), USER_FIELDS);
             return facebookAuthenticationMapper.map(facebookResponse);
         } catch (FeignException e) {
             log.error(e.getMessage());

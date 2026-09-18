@@ -2,38 +2,33 @@ spring:
   jackson:
     defaultPropertyInclusion: non_null
   jpa:
-    show-sql: true
     hibernate:
       ddl-auto: update
+  flyway:
+    enabled: false
 
 images:
   types:
     - png
     - jpg
     - jpeg
-    -
+
 facebook:
   emulator:
-    enabled: true
+    enabled: false
+  client-id: ${CLIENT_ID:}
+  client-secret: ${CLIENT_SECRET:}
+  notif-token: ${FB_TOKEN:}
+  page-token: ${FB_PAGE_TOKEN:}
+  page-id: ${FB_PAGE_ID:}
+
+env:
+  url: ${PROD_URL:http://localhost:8080}
+  api-keys: ${API_KEYS:}
+  api-keys-required: ${API_KEYS_REQUIRED:false}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://cosmopk.pl}
 
 endpoint:
   secured:
-    - /user
-
-mail:
-  host: smtp.gmail.com
-  port: 587
-  username: ${MAIL_USERNAME}
-  password: ${MAIL_PASSWORD}
-  protocol: smtp
-  auth: true
-  starttlsEnable: true
-  debug: true
-
-logging:
-  level:
-    org:
-      springframework:
-        web:
-          filter:
-            CommonsRequestLoggingFilter: DEBUG
+    - /api/user
+    - /api/user/**

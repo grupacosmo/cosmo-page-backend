@@ -32,6 +32,8 @@ public abstract class PostMapper {
     public abstract Post map(PostModel postModel);
 
     public abstract PostListQueryItem mapPostListQueryItem(Post post);
+
+    @Mapping(target = "images", ignore = true)
     public abstract PostListQueryItemDetails mapPostListQueryItemDetails(Post post);
 
     @AfterMapping
@@ -59,16 +61,22 @@ public abstract class PostMapper {
     @Mapping(source = "facebookDataItem.media.image", target = "facebookImages")
     @Mapping(source = "facebookDataItem.message", target = "description")
     @Mapping(source = "facebookDataItem.id", target = "providerId")
+    @Mapping(target = "id", ignore = true)
     public abstract Post mapPostFromFacebookData(FacebookDataItem facebookDataItem);
+
+    @Mapping(target = "id", ignore = true)
+    public abstract Post map(PostRequest postRequest);
 
     public List<FacebookImage> map(FacebookPostImage value) {
         if(value == null)
-            return List.of();
+            return new ArrayList<>();
 
-        return List.of(new FacebookImage()
+        List<FacebookImage> images = new ArrayList<>();
+        images.add(new FacebookImage()
                 .setSrc(value.getSrc())
                 .setWidth(value.getWidth())
                 .setHeight(value.getHeight()));
+        return images;
     }
 
     public Post mapPostFromFacebookData(Pair<FacebookDataItem, FacebookResponse> fbPair, Post post) {

@@ -1,6 +1,7 @@
 package com.webdev.cosmo.cosmobackend.service.internal.facebook;
 
 import com.webdev.cosmo.cosmobackend.service.common.FacebookClient;
+import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.SaveTokenConsumer;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.service.async.Cache;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.FacebookResponse;
@@ -8,13 +9,11 @@ import org.openapitools.model.TokenModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.function.Consumer;
-
 @RestController
 @RequestMapping("/api/facebook")
 @RequiredArgsConstructor
 public class FacebookController {
-    private final Consumer<TokenModel> saveTokenConsumer;
+    private final SaveTokenConsumer saveTokenConsumer;
     private final FacebookClient facebookClient;
     private final Cache cache;
 

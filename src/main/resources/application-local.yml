@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/cosmo_backend
+    url: jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:5432}/cosmo_backend
     username: postgres
     password: postgres
   jackson:
@@ -9,6 +9,8 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+  flyway:
+    enabled: false
 
 images:
   types:
@@ -16,6 +18,24 @@ images:
     - jpg
     - jpeg
 
+facebook:
+  emulator:
+    enabled: true
+  notif-token: ${FB_TOKEN:local-webhook-token}
+
 env:
   url: http://localhost:8080
-  api-keys: VERY_SECURED_KEY
+  api-keys-required: false
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          filter:
+            CommonsRequestLoggingFilter: DEBUG

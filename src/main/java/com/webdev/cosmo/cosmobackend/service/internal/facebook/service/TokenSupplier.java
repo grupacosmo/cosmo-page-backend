@@ -2,18 +2,16 @@ package com.webdev.cosmo.cosmobackend.service.internal.facebook.service;
 
 import com.webdev.cosmo.cosmobackend.service.api.Token;
 import com.webdev.cosmo.cosmobackend.service.internal.facebook.repository.TokenRepository;
-import com.webdev.cosmo.cosmobackend.util.BetterOptional;
-import com.webdev.cosmo.cosmobackend.util.interfaces.ListQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.token.TokenService;
 
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.webdev.cosmo.cosmobackend.error.Error.NO_TOKENS_FOUND;
-
+/**
+ * Provides a stored page token, falling back to an empty token (and a log line)
+ * when none is present.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class TokenSupplier implements Supplier<Token> {
@@ -21,24 +19,17 @@ public class TokenSupplier implements Supplier<Token> {
 
     @Override
     public Token get() {
-        return BetterOptional.of(tokenRepository.findAll())
-                .peek(multiTokenConsumer)
-                .filter(tokens -> !tokens.isEmpty())
-                .map(tokens -> {
-                    System.out.println(tokens);
-                    return tokens.get(0);
-                })
-                .orElse(new Token());
-    }
+        List<Token> tokens = tokenRepository.findAll();
 
-    private Token getEmptyToken() {
-        log.error("No tokens found in the database. Please provide a token.");
-        return new Token();
-    }
-
-    private final Consumer<List<Token>> multiTokenConsumer = tokens -> {
-        if(tokens.size() > 1) {
+        if (tokens.size() > 1) {
             log.error("Multiple tokens found in the database. Using the first one.");
         }
-    };
+
+        if (tokens.isEmpty()) {
+            log.error("No tokens found in the database. Please provide a token.");
+            return new Token();
+        }
+
+        return tokens.get(0);
+    }
 }
