@@ -1,9 +1,9 @@
-🚨 Uwaga! Coś padło na serwerze 🚨
+🚨 Heads up! Something went down on the server 🚨
 
-😱 Hej, sprawdźcie serwer — strona nie działa!
+😱 Hey, check the server — the website is not running!
 
 📦 Pod: {POD}
-🔄 Restarty: {RESTARTS_PREV} → {RESTARTS_NOW}
-🩺 Powód: {REASON} (exit {EXIT_CODE})
-🏷️ Wersja: {IMAGE}
+🔄 Restarts: {RESTARTS_PREV} → {RESTARTS_NOW}
+🩺 Reason: {REASON} (exit {EXIT_CODE})
+🏷️ Version: {IMAGE}
 📄 Dump: {DUMP}

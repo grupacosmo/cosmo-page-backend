@@ -1,7 +1,7 @@
-# crash-watcher: CronJob co minute sprawdza restarty podow backendu.
-# Przy wykryciu restartu zbiera dump (logi/events/describe) na PVC cosmo-incidents
-# i wysyla powiadomienie na Messengera (skrypty w ConfigMap crash-watcher-scripts,
-# tworzonej przez apply.sh z katalogu scripts/).
+# crash-watcher: a CronJob that checks backend pod restarts every minute.
+# On a restart it collects a dump (logs/events/describe) on the cosmo-incidents PVC
+# and sends a Messenger notification (scripts live in the crash-watcher-scripts
+# ConfigMap, created by apply.sh from the scripts/ directory).
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -38,7 +38,7 @@ roleRef:
   name: crash-watcher
   apiGroup: rbac.authorization.k8s.io
 ---
-# Miejsce na dumpy incydentow + plik stanu (porownanie restartCount miedzy uruchomieniami).
+# Incident dumps + state file (comparing restartCount between runs).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -69,7 +69,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: crash-watcher
-              # Obraz z kubectl + curl + jq. Dopasuj tag do wersji klastra.
+              # Image with kubectl + curl + jq. Match the tag to your cluster version.
               image: alpine/k8s:1.31.2
               imagePullPolicy: IfNotPresent
               command: ["/bin/bash", "/scripts/watch.sh"]

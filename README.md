@@ -480,7 +480,7 @@ Page, so the Page must be a participant of the group chat. It needs `FB_PAGE_TOK
 3. **Find `MESSENGER_RECIPIENT_ID`** = the **conversation/thread id** of that group (not the user
    id). List the Page's conversations with
    [`k8s/scripts/find-thread.sh`](./k8s/scripts/find-thread.sh) — it prints every conversation,
-   marking group chats as `[GRUPA]` (pick one of those) vs `[1:1]`:
+   marking group chats as `[GROUP]` (pick one of those) vs `[1:1]`:
    ```shell
    FB_PAGE_TOKEN=<page-token> ./k8s/scripts/find-thread.sh
    ```
@@ -492,7 +492,7 @@ Page, so the Page must be a participant of the group chat. It needs `FB_PAGE_TOK
    ```
 
 **Customize the alert message.** The text is a template in
-[`k8s/scripts/alert-template.txt`](./k8s/scripts/alert-template.txt) (Polish, with emoji by
+[`k8s/scripts/alert-template.txt`](./k8s/scripts/alert-template.txt) (English, with emoji by
 default), shipped inside the `crash-watcher-scripts` ConfigMap. Edit it without a redeploy:
 
 ```shell

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Znajdz MESSENGER_RECIPIENT_ID (thread id grupy) dla powiadomien crash-watchera.
+# Find MESSENGER_RECIPIENT_ID (group thread id) for crash-watcher alerts.
 #
-# Jak to dziala:
-#   Strona (Page) musi byc dodana jako uczestnik grupy na Messengerze.
-#   Kazda konwersacja strony ma id typu "t_id_...". To id wpisujesz jako
-#   MESSENGER_RECIPIENT_ID w /cosmo/.env-prod.
+# How it works:
+#   The Page must be added as a participant of a Messenger group chat.
+#   Every Page conversation has an id like "t_id_...". That id goes into
+#   MESSENGER_RECIPIENT_ID in /cosmo/.env-prod.
 #
-# Uzycie:
-#   FB_PAGE_TOKEN=<page token> ./find-thread.sh                          # lista konwersacji
-#   FB_PAGE_TOKEN=<page token> ./find-thread.sh --test t_id_... "test"   # test wysylki
+# Usage:
+#   FB_PAGE_TOKEN=<page token> ./find-thread.sh                          # list conversations
+#   FB_PAGE_TOKEN=<page token> ./find-thread.sh --test t_id_... "test"   # test send
 #
-# Wymaga: curl + jq (ma je obraz alpine/k8s uzywany przez crash-watcher).
+# Requires: curl + jq (both available in the alpine/k8s image used by crash-watcher).
 set -euo pipefail
 
 : "${FB_PAGE_TOKEN:?FB_PAGE_TOKEN env missing}"
@@ -19,17 +19,17 @@ GRAPH="https://graph.facebook.com/${FB_API_VERSION}"
 
 send_test() {
   local id="${1:?usage: --test <t_id...> <message>}"
-  local text="${2:-Test wiadomosc z crash-watchera}"
+  local text="${2:-Test message from crash-watcher}"
   local payload resp
   payload=$(jq -n --arg id "$id" --arg text "$text" \
     '{recipient: {id: $id}, message: {text: $text}}')
   resp=$(curl -sS -X POST "$GRAPH/me/messages?access_token=$FB_PAGE_TOKEN" \
     -H "Content-Type: application/json" -d "$payload")
   if echo "$resp" | grep -q '"error"'; then
-    echo "BLAD Graph API: $resp" >&2
+    echo "Graph API error: $resp" >&2
     exit 1
   fi
-  echo "OK: wyslano test do $id"
+  echo "OK: test sent to $id"
 }
 
 if [ "${1:-}" = "--test" ]; then
@@ -39,22 +39,22 @@ fi
 
 RESP=$(curl -sS "$GRAPH/me/conversations?fields=id,updated_time,message_count,participants{id,name}&limit=100&access_token=$FB_PAGE_TOKEN")
 if echo "$RESP" | grep -q '"error"'; then
-  echo "BLAD Graph API: $RESP" >&2
+  echo "Graph API error: $RESP" >&2
   exit 1
 fi
 
-echo "Konwersacje strony:"
-echo "$RESP" | jq -r '.data[] | "\(if ((.participants.data // []) | length) >= 3 then "[GRUPA]" else "[1:1]" end) id: \(.id)\n  participants: \([.participants.data[]?.name] | join(", "))\n  messages: \(.message_count) | updated: \(.updated_time)\n"'
+echo "Page conversations:"
+echo "$RESP" | jq -r '.data[] | "\(if ((.participants.data // []) | length) >= 3 then "[GROUP]" else "[1:1]" end) id: \(.id)\n  participants: \([.participants.data[]?.name] | join(", "))\n  messages: \(.message_count) | updated: \(.updated_time)\n"'
 
-echo "WSKAZOWKA:"
-echo "  [GRUPA] = czat grupowy (strona + co najmniej 2 osoby) - TO wybierasz,"
-echo "           zeby alerty trafialy do grupy, w ktorej siedza uzytkownicy."
-echo "  [1:1]   = prywatna rozmowa strony z jednym uzytkownikiem."
-echo "  1. Strona musi byc uczestnikiem grupy na Messengerze (dodaj ja do grupy)."
-echo "  2. Wybierz id konwersacji oznaczonej [GRUPA] (t_id_...)."
-echo "  3. Wpisz je jako MESSENGER_RECIPIENT_ID w /cosmo/.env-prod i odtworz Secret cosmo-env (k8s/apply.sh krok 1)."
+echo "HINT:"
+echo "  [GROUP] = group chat (Page + at least 2 people) - pick this one so"
+echo "            alerts land in the chat where your users are."
+echo "  [1:1]   = private conversation between the Page and one user."
+echo "  1. The Page must be a participant of the Messenger group (add it to the group)."
+echo "  2. Pick the id of a conversation marked [GROUP] (t_id_...)."
+echo "  3. Put it as MESSENGER_RECIPIENT_ID in /cosmo/.env-prod and recreate the cosmo-env Secret (k8s/apply.sh step 1)."
 echo "  4. Test: FB_PAGE_TOKEN=<token> ./find-thread.sh --test t_id_... \"test alert\""
 echo
-echo "UWAGA (24h okno wysylki): strona moze pisac tylko w oknie 24h od ostatniej"
-echo "interakcji, CHYBA ZE uczestnik konwersacji ma role na stronie (admin/tester)."
-echo "Zeby alerty zawsze docieraly, nadaj swojemu uzytkownikowi role tester/admin strony."
+echo "NOTE (24h messaging window): a Page can only message within 24h of the last"
+echo "interaction, UNLESS a participant has a role on the Page (admin/tester)."
+echo "To always get alerts, give your FB user a tester/admin role on the Page."

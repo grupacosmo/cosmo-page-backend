@@ -136,9 +136,9 @@ jobs:
           sarif_file: trivy-results.sarif
 
   deploy:
-    # Wdrozenie na klaster k8s (namespace cosmo). Serwer musi miec kubectl
-    # z dostepem do klastra (np. k3s). Rollback robi k8s przez rollout undo
-    # (poprzedni ReplicaSet jest zachowany), wiec nie trzeba cache'owac OLD_TAG.
+    # Deploys to the k8s cluster (namespace cosmo). The server must have kubectl
+    # with access to the cluster (e.g. k3s). Rollback is done by k8s via rollout undo
+    # (the previous ReplicaSet is kept), so no OLD_TAG caching is needed.
     name: Deploy to cluster with smoke tests and rollback
     if: ${{ always() && ((github.ref == 'refs/heads/master' && needs.docker-build.result == 'success') || github.event_name == 'workflow_dispatch') }}
     needs: docker-build
@@ -168,7 +168,7 @@ jobs:
 
             echo "Deploying $IMAGE:$NEW_TAG to $NS/$DEPLOY"
 
-            # Upewnij sie, ze klaster ma aktualny imagePullSecret do prywatnego repo.
+            # Make sure the cluster has a current imagePullSecret for the private repo.
             kubectl -n "$NS" create secret docker-registry regcred \
               --docker-server=https://index.docker.io/v1/ \
               --docker-username="${{ secrets.DOCKERHUB_USERNAME }}" \
@@ -194,7 +194,7 @@ jobs:
               exit 1
             }
 
-            # Smoke testy przez port-forward na Service (unika eksponowania portow).
+            # Smoke tests via port-forward on the Service (no need to expose ports).
             kubectl -n "$NS" port-forward "svc/backend" 8081:80 >/dev/null 2>&1 &
             PF_PID=$!
             trap 'kill $PF_PID 2>/dev/null || true' EXIT

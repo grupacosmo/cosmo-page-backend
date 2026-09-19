@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Wysyla powiadomienie do Messengera (Graph API, wiadomosc strony).
-# Wymagane zmienne: FB_PAGE_TOKEN (juz jest w /cosmo/.env-prod) oraz
-# MESSENGER_RECIPIENT_ID = thread id grupy/czatowki (poczatek zwykle "t_id...").
+# Sends a Messenger notification (Graph API, sent as the Page).
+# Required env: FB_PAGE_TOKEN (already in /cosmo/.env-prod) and
+# MESSENGER_RECIPIENT_ID = group/chat thread id (usually starts with "t_id...").
 set -u
 
 MESSAGE="${1:-}"
 : "${FB_PAGE_TOKEN:?FB_PAGE_TOKEN env missing}"
-: "${MESSENGER_RECIPIENT_ID:?MESSENGER_RECIPIENT_ID env missing (thread id grupy na Messengerze)}"
+: "${MESSENGER_RECIPIENT_ID:?MESSENGER_RECIPIENT_ID env missing (Messenger group thread id)}"
 FB_API_VERSION="${FB_API_VERSION:-v21.0}"
 
 if [ -z "$MESSAGE" ]; then
-  echo "notify-messenger: pusty message, pomijam" >&2
+  echo "notify-messenger: empty message, skipping" >&2
   exit 0
 fi
 
@@ -22,7 +22,7 @@ RESP=$(curl -sS -X POST "https://graph.facebook.com/${FB_API_VERSION}/me/message
   -d "$PAYLOAD")
 
 if echo "$RESP" | grep -q '"error"'; then
-  echo "notify-messenger: blad API: $RESP" >&2
+  echo "notify-messenger: API error: $RESP" >&2
   exit 1
 fi
-echo "notify-messenger: wyslano do $MESSENGER_RECIPIENT_ID"
+echo "notify-messenger: sent to $MESSENGER_RECIPIENT_ID"
