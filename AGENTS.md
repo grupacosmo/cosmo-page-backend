@@ -118,10 +118,14 @@ must stay valid.
 
 - Copy `.env.example` → `.env` for local env overrides (loaded via `spring-dotenv`). `.env` is
   gitignored. Never commit `.env` or real tokens.
-- Prod env vars are read by the CI deploy from `/cosmo/.env-prod` on the server.
+- Prod env vars live in `/cosmo/.env-prod` on the server; the CI deploy and `k8s/apply.sh` turn it
+  into the `cosmo-env` Kubernetes Secret (the image is on a private Docker Hub repo, so the
+  cluster also needs the `regcred` imagePullSecret). Keep the file in sync with `.env.example`.
 - Useful vars: `POSTGRES_URL`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`, `API_KEYS`,
   `API_KEYS_REQUIRED` (`true` in prod → fail closed), `CORS_ALLOWED_ORIGINS`, `FB_TOKEN`,
-  `FB_PAGE_TOKEN`, `FB_PAGE_ID`, `CLIENT_ID`, `CLIENT_SECRET`, `PROD_URL`, `MAIL_*`.
+  `FB_PAGE_TOKEN`, `FB_PAGE_ID`, `CLIENT_ID`, `CLIENT_SECRET`, `PROD_URL`, `MAIL_*`,
+  `MESSENGER_RECIPIENT_ID` (Messenger thread id for crash-watcher alerts; required by the
+  CronJob).
 - Security note: do not loosen `ApiKeyFilter` to fail-open, and do not re-add "smoke"/demo
   endpoints that send to hardcoded recipients.
 
@@ -143,8 +147,12 @@ locally at `http://localhost:8080/swagger-ui.html` (disabled in prod).
 
 - `.github/workflows/ci.yml`: `test` (all tests + coverage) → `docker-build-check` (PRs) →
   `docker-build` (master, immutable `sha-<commit>` + `latest` tags, Trivy scan) → `deploy` (master,
-  smoke tests against a candidate container, rollback-by-design). Supports manual
-  redeploy/rollback via `workflow_dispatch` with a `tag` input.
+  `kubectl set image` + `rollout` on the Kubernetes cluster, smoke tests via `port-forward`,
+  rollback via `rollout undo`). Supports manual redeploy/rollback via `workflow_dispatch` with a
+  `tag` input.
+- The production Kubernetes setup lives in `k8s/` (`backend.yaml`, `crash-watcher.yaml`,
+  `apply.sh`, `scripts/`): self-healing probes, heap-dump PVC, a crash-watcher CronJob that dumps
+  crash evidence and alerts on Messenger. See `README.md` → *Kubernetes deployment*.
 - `.github/workflows/codeql.yml` and `dependency-review.yml` run security checks.
 - `dependabot.yml` keeps Maven + Actions dependencies updated.
 - Do not downgrade pinned actions below their current majors without reason.

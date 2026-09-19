@@ -136,7 +136,10 @@ jobs:
           sarif_file: trivy-results.sarif
 
   deploy:
-    name: Deploy to server with smoke tests and rollback
+    # Deploys to the k8s cluster (namespace cosmo). The server must have kubectl
+    # with access to the cluster (e.g. k3s). Rollback is done by k8s via rollout undo
+    # (the previous ReplicaSet is kept), so no OLD_TAG caching is needed.
+    name: Deploy to cluster with smoke tests and rollback
     if: ${{ always() && ((github.ref == 'refs/heads/master' && needs.docker-build.result == 'success') || github.event_name == 'workflow_dispatch') }}
     needs: docker-build
     runs-on: ubuntu-latest
@@ -155,28 +158,52 @@ jobs:
 
             NEW_TAG="${{ github.event.inputs.tag || format('sha-{0}', github.sha) }}"
             IMAGE="cosmopk/cosmo-page-backend"
+            NS="cosmo"
+            DEPLOY="backend"
+            export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
+            command -v kubectl >/dev/null 2>&1 || { echo "kubectl missing on server"; exit 1; }
 
             API_KEY=$(grep -E '^API_KEYS=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs | cut -d, -f1)
             FB_TOKEN=$(grep -E '^FB_TOKEN=' /cosmo/.env-prod | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
 
-            OLD_TAG=$(docker inspect --format '{{ index .Config.Image }}' cosmo-page-backend 2>/dev/null || true)
-            echo "Deploying $IMAGE:$NEW_TAG (previous image: ${OLD_TAG:-none})"
+            echo "Deploying $IMAGE:$NEW_TAG to $NS/$DEPLOY"
 
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            docker pull "$IMAGE:$NEW_TAG"
+            # Refresh both secrets from /cosmo/.env-prod so env changes reach the
+            # cluster, and make sure the cluster has a current imagePullSecret
+            # for the private repo.
+            kubectl -n "$NS" create secret generic cosmo-env \
+              --from-env-file=/cosmo/.env-prod \
+              --dry-run=client -o yaml | kubectl apply -f -
+            kubectl -n "$NS" create secret docker-registry regcred \
+              --docker-server=https://index.docker.io/v1/ \
+              --docker-username="${{ secrets.DOCKERHUB_USERNAME }}" \
+              --docker-password="${{ secrets.DOCKERHUB_TOKEN }}" \
+              --dry-run=client -o yaml | kubectl apply -f -
 
-            docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
-            docker run -d --name cosmo-page-backend-new --restart unless-stopped -p 8081:8080 \
-              --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
-              --health-interval 5s --health-timeout 5s --health-retries 60 \
-              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"
+            kubectl -n "$NS" set image "deployment/$DEPLOY" "backend=$IMAGE:$NEW_TAG"
+
+            if kubectl -n "$NS" rollout status "deployment/$DEPLOY" --timeout=300s; then
+              echo "Rollout OK"
+            else
+              echo "Rollout failed, rolling back..."
+              kubectl -n "$NS" rollout undo "deployment/$DEPLOY"
+              kubectl -n "$NS" rollout status "deployment/$DEPLOY" --timeout=120s || true
+              exit 1
+            fi
 
             smoke_failed() {
               echo "Smoke test failed: $1"
-              docker logs --tail 100 cosmo-page-backend-new || true
-              docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
+              kubectl -n "$NS" logs "deployment/$DEPLOY" --tail=100 || true
+              kubectl -n "$NS" rollout undo "deployment/$DEPLOY"
+              kubectl -n "$NS" rollout status "deployment/$DEPLOY" --timeout=120s || true
               exit 1
             }
+
+            # Smoke tests via port-forward on the Service (no need to expose ports).
+            kubectl -n "$NS" port-forward "svc/backend" 8081:80 >/dev/null 2>&1 &
+            PF_PID=$!
+            trap 'kill $PF_PID 2>/dev/null || true' EXIT
+            sleep 3
 
             HEALTH=""
             for i in $(seq 1 60); do
@@ -197,44 +224,4 @@ jobs:
             echo "Webhook handshake challenge: $CHALLENGE"
             [ "$CHALLENGE" = "2137" ] || smoke_failed "webhook handshake returned $CHALLENGE"
 
-            echo "Smoke tests passed, promoting candidate..."
-            docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
-            if ! docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
-              --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
-              --health-interval 5s --health-timeout 5s --health-retries 60 \
-              --env-file /cosmo/.env-prod "$IMAGE:$NEW_TAG"; then
-              echo "Promotion failed; restoring previous image ${OLD_TAG:-none}..."
-              if [ -n "${OLD_TAG:-}" ]; then
-                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
-                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
-                  --health-interval 5s --health-timeout 5s --health-retries 60 \
-                  --env-file /cosmo/.env-prod "$OLD_TAG"
-              fi
-              docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
-              exit 1
-            fi
-            docker rm -f cosmo-page-backend-new >/dev/null 2>&1 || true
-
-            echo "Verifying promoted container health..."
-            for i in $(seq 1 30); do
-              if docker inspect -f '{{.State.Health.Status}}' cosmo-page-backend 2>/dev/null | grep -q healthy; then
-                break
-              fi
-              sleep 2
-            done
-            FINAL_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' cosmo-page-backend 2>/dev/null || true)
-            echo "Final health: $FINAL_HEALTH"
-            if [ "$FINAL_HEALTH" != "healthy" ]; then
-              docker logs --tail 100 cosmo-page-backend || true
-              echo "Promoted container is unhealthy, rolling back to ${OLD_TAG:-none}..."
-              docker rm -f cosmo-page-backend >/dev/null 2>&1 || true
-              if [ -n "${OLD_TAG:-}" ]; then
-                docker run -d --name cosmo-page-backend --restart unless-stopped -p 8080:8080 \
-                  --health-cmd "wget -q -O- http://localhost:8080/actuator/health > /dev/null 2>&1 || exit 1" \
-                  --health-interval 5s --health-timeout 5s --health-retries 60 \
-                  --env-file /cosmo/.env-prod "$OLD_TAG"
-              fi
-              exit 1
-            fi
-
-            echo "Deployed $IMAGE:$NEW_TAG (previous image kept in registry as ${OLD_TAG:-none} for manual rollback)"
+            echo "Deployed $IMAGE:$NEW_TAG to $NS/$DEPLOY"

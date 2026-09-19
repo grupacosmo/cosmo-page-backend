@@ -1,0 +1,9 @@
+🚨 Heads up! Something went down on the server 🚨
+
+😱 Hey, check the server — the website is not running!
+
+📦 Pod: {POD}
+🔄 Restarts: {RESTARTS_PREV} → {RESTARTS_NOW}
+🩺 Reason: {REASON} (exit {EXIT_CODE})
+🏷️ Version: {IMAGE}
+📄 Dump: {DUMP}

@@ -1,0 +1,120 @@
+# Production backend on Kubernetes.
+# Requires the `cosmo-env` Secret to exist first (see k8s/apply.sh):
+#   kubectl -n cosmo create secret generic cosmo-env --from-env-file=/cosmo/.env-prod --dry-run=client -o yaml | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cosmo
+---
+# Heap dumps + GC logs survive a pod restart. Note: ReadWriteOnce =
+# works on a single-node cluster (k3s). Use RWX on multi-node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cosmo-dumps
+  namespace: cosmo
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: cosmo
+  labels:
+    app: cosmo-backend
+spec:
+  # 2 replicas: while one restarts, the other keeps serving traffic (zero-downtime).
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cosmo-backend
+  template:
+    metadata:
+      labels:
+        app: cosmo-backend
+    spec:
+      # The image is on a private Docker Hub repo - the pod must authenticate
+      # against the registry. The `regcred` Secret is created by k8s/apply.sh (step 0).
+      imagePullSecrets:
+        - name: regcred
+      # fsGroup = container uid (cosmopk from the Dockerfile) so the JVM can write to the PVC.
+      securityContext:
+        fsGroup: 1001
+      # 30s for a graceful JVM shutdown (Spring shutdown hook).
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: cosmopk/cosmo-page-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: cosmo-env
+          env:
+            # Heap dump + GC log onto the PVC on OOM/JVM crash.
+            - name: JAVA_OPTS
+              value: "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps/ -Xlog:gc:/dumps/gc.log"
+          startupProbe:
+            # Spring Boot exposes only the liveness/readiness groups; the
+            # startup probe uses the liveness path (exempt from the API key).
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            # The kubelet restarts the pod when it stops being alive (max 3x, then CrashLoopBackOff).
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            # A failing pod is removed from the Service - the frontend never sees 502.
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          lifecycle:
+            preStop:
+              # Drain: give the pod a moment to deregister from the Service before it dies.
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          volumeMounts:
+            - name: dumps
+              mountPath: /dumps
+      volumes:
+        - name: dumps
+          persistentVolumeClaim:
+            claimName: cosmo-dumps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: cosmo
+spec:
+  selector:
+    app: cosmo-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
