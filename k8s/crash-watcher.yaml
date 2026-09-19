@@ -23,6 +23,9 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -88,6 +91,13 @@ spec:
                     secretKeyRef:
                       name: cosmo-env
                       key: MESSENGER_RECIPIENT_ID
+                # Optional: override the default Graph API version (v21.0).
+                - name: FB_API_VERSION
+                  valueFrom:
+                    secretKeyRef:
+                      name: cosmo-env
+                      key: FB_API_VERSION
+                      optional: true
               volumeMounts:
                 - name: scripts
                   mountPath: /scripts

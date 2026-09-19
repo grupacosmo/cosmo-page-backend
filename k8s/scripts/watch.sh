@@ -7,8 +7,8 @@
 # crash-watcher-scripts). Available placeholders:
 #   {POD} {RESTARTS_PREV} {RESTARTS_NOW} {REASON} {EXIT_CODE} {STATUS}
 #   {IMAGE} {DUMP} {LOG_SNIPPET}
-# A failed send is saved to $DATA_DIR/pending-alert.txt and retried on the
-# next run.
+# A failed send is saved under $DATA_DIR/pending/ (one file per incident) and
+# retried on the next run.
 set -u
 
 NS="${WATCH_NAMESPACE:-cosmo}"
@@ -19,20 +19,21 @@ STATE_DIR="$DATA_DIR/state"
 DUMPS_DIR="$DATA_DIR/dumps"
 STATE_FILE="$STATE_DIR/restart-counts.txt"
 SNAPSHOT="$STATE_DIR/snapshot.txt"
-PENDING_FILE="$DATA_DIR/pending-alert.txt"
+PENDING_DIR="$DATA_DIR/pending"
 TEMPLATE_FILE="/scripts/alert-template.txt"
 
-mkdir -p "$STATE_DIR" "$DUMPS_DIR"
+mkdir -p "$STATE_DIR" "$DUMPS_DIR" "$PENDING_DIR"
 
-# ===== retry of a pending notification =====
-if [ -f "$PENDING_FILE" ]; then
-  if /scripts/notify-messenger.sh "$(cat "$PENDING_FILE")"; then
-    rm -f "$PENDING_FILE"
-    echo "retry: pending message sent"
+# ===== retry of pending notifications =====
+for f in "$PENDING_DIR"/*.txt; do
+  [ -e "$f" ] || break
+  if /scripts/notify-messenger.sh "$(cat "$f")"; then
+    rm -f "$f"
+    echo "retry: pending message sent ($(basename "$f"))"
   else
-    echo "retry: still not sent - keeping in pending" >&2
+    echo "retry: still not sent - keeping $(basename "$f")" >&2
   fi
-fi
+done
 
 # ===== message template =====
 template() {
@@ -63,9 +64,13 @@ template() {
 }
 
 # Current state: pod | restartCount | last termination reason | exit code | waiting.reason
+# On failure keep the previous baseline so the CronJob can retry (no false incidents).
 kubectl -n "$NS" get pods -l "$LABEL" \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.containerStatuses[0].restartCount}{"\t"}{.status.containerStatuses[0].lastState.terminated.reason}{"\t"}{.status.containerStatuses[0].lastState.terminated.exitCode}{"\t"}{.status.containerStatuses[0].waiting.reason}{"\n"}{end}' \
-  > "$SNAPSHOT" 2>/dev/null
+  > "$SNAPSHOT" 2>/dev/null || {
+  echo "watch: kubectl get pods failed - keeping previous state" >&2
+  exit 1
+}
 
 while IFS=$'\t' read -r POD COUNT LAST_REASON EXIT_CODE WAITING_REASON; do
   [ -z "${POD:-}" ] && continue
@@ -101,8 +106,9 @@ while IFS=$'\t' read -r POD COUNT LAST_REASON EXIT_CODE WAITING_REASON; do
   if /scripts/notify-messenger.sh "$MSG"; then
     echo "INCIDENT: notification sent for $POD"
   else
-    echo "$MSG" > "$PENDING_FILE"
-    echo "INCIDENT: notification NOT sent for $POD - saved for retry" >&2
+    PENDING_ALERT="$PENDING_DIR/alert-$(date +%Y%m%d-%H%M%S)-$POD.txt"
+    echo "$MSG" > "$PENDING_ALERT"
+    echo "INCIDENT: notification NOT sent for $POD - queued for retry ($(basename "$PENDING_ALERT"))" >&2
   fi
 done < "$SNAPSHOT"
 

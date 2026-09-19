@@ -17,9 +17,12 @@ fi
 PAYLOAD=$(jq -n --arg id "$MESSENGER_RECIPIENT_ID" --arg text "$MESSAGE" \
   '{recipient: {id: $id}, message: {text: $text}}')
 
-RESP=$(curl -sS -X POST "https://graph.facebook.com/${FB_API_VERSION}/me/messages" \
+RESP=$(curl --fail -sS -X POST "https://graph.facebook.com/${FB_API_VERSION}/me/messages?access_token=$FB_PAGE_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "$PAYLOAD")
+  -d "$PAYLOAD") || {
+  echo "notify-messenger: request failed (curl exit $?)" >&2
+  exit 1
+}
 
 if echo "$RESP" | grep -q '"error"'; then
   echo "notify-messenger: API error: $RESP" >&2

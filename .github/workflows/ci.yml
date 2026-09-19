@@ -168,7 +168,12 @@ jobs:
 
             echo "Deploying $IMAGE:$NEW_TAG to $NS/$DEPLOY"
 
-            # Make sure the cluster has a current imagePullSecret for the private repo.
+            # Refresh both secrets from /cosmo/.env-prod so env changes reach the
+            # cluster, and make sure the cluster has a current imagePullSecret
+            # for the private repo.
+            kubectl -n "$NS" create secret generic cosmo-env \
+              --from-env-file=/cosmo/.env-prod \
+              --dry-run=client -o yaml | kubectl apply -f -
             kubectl -n "$NS" create secret docker-registry regcred \
               --docker-server=https://index.docker.io/v1/ \
               --docker-username="${{ secrets.DOCKERHUB_USERNAME }}" \

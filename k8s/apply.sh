@@ -6,7 +6,10 @@ set -euo pipefail
 
 NS="cosmo"
 
-echo "==> Step 0/4: regcred Secret (pull private Docker Hub image)"
+echo "==> Step 0/4: Namespace (must exist before the secrets below)"
+kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
+
+echo "==> Step 1/4: regcred Secret (pull private Docker Hub image)"
 echo "    cosmopk/cosmo-page-backend lives in a private repo."
 echo "    Uses DOCKERHUB_USERNAME/DOCKERHUB_TOKEN from the environment if set;"
 echo "    otherwise it prompts. The token is an access token, NOT the account password."
@@ -24,7 +27,7 @@ kubectl -n "$NS" create secret docker-registry regcred \
   --docker-password="$REGCRED_PASS" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> Step 1/4: cosmo-env Secret from /cosmo/.env-prod"
+echo "==> Step 2/4: cosmo-env Secret from /cosmo/.env-prod"
 echo "    BEFORE this, add to /cosmo/.env-prod:"
 echo "      MESSENGER_RECIPIENT_ID=<Messenger group thread id, e.g. t_id_...>"
 echo "    (FB_PAGE_TOKEN is already there)"
@@ -32,10 +35,10 @@ kubectl -n "$NS" create secret generic cosmo-env \
   --from-env-file=/cosmo/.env-prod \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> Step 2/4: backend.yaml (Namespace, PVC dumps, Deployment, Service)"
+echo "==> Step 3/4: backend.yaml (Namespace, PVC dumps, Deployment, Service)"
 kubectl apply -f backend.yaml
 
-echo "==> Step 3/4: ConfigMap with scripts + template + crash-watcher.yaml (RBAC, PVC, CronJob)"
+echo "==> Step 4/4: ConfigMap with scripts + template + crash-watcher.yaml (RBAC, PVC, CronJob)"
 kubectl create configmap crash-watcher-scripts \
   --from-file=scripts/watch.sh \
   --from-file=scripts/notify-messenger.sh \

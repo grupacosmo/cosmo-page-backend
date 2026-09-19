@@ -66,8 +66,10 @@ spec:
             - name: JAVA_OPTS
               value: "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps/ -Xlog:gc:/dumps/gc.log"
           startupProbe:
+            # Spring Boot exposes only the liveness/readiness groups; the
+            # startup probe uses the liveness path (exempt from the API key).
             httpGet:
-              path: /actuator/health/startup
+              path: /actuator/health/liveness
               port: 8080
             periodSeconds: 10
             failureThreshold: 30

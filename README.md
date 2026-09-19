@@ -294,8 +294,8 @@ integration tests.
 | `Schema validation failed` / Flyway migration error (prod) | The DB schema does not match the entities. Add a new `V<next>__*.sql` migration instead of relying on `ddl-auto`. |
 | I want to know which commit is deployed | `curl http://localhost:8080/actuator/info` reports the git commit (prod exposes `health` + `info`). |
 | Pod restarts in a loop (`CrashLoopBackOff`) | `kubectl -n cosmo logs deployment/backend --previous`. Typical causes: Flyway schema validation, bad env config, OOM. While down the pod is cut off from traffic by the readiness probe — no 502s. |
-| `ImagePullBackOff` / `ErrImagePull` | The cluster cannot pull the image from the private Docker Hub repo — the `regcred` Secret is missing/wrong. Recreate it (`k8s/apply.sh` step 0) or wait for the next deploy (CI refreshes it). |
-| crash-watcher CronJob never starts | `MESSENGER_RECIPIENT_ID` missing in `/cosmo/.env-prod` (or the `cosmo-env` Secret is stale). Add the variable and recreate the Secret (`k8s/apply.sh` step 1). |
+| `ImagePullBackOff` / `ErrImagePull` | The cluster cannot pull the image from the private Docker Hub repo — the `regcred` Secret is missing/wrong. Recreate it (`k8s/apply.sh` step 1) or wait for the next deploy (CI refreshes it). |
+| crash-watcher CronJob never starts | `MESSENGER_RECIPIENT_ID` missing in `/cosmo/.env-prod` (or the `cosmo-env` Secret is stale). Add the variable and recreate the Secret (`k8s/apply.sh` step 2). |
 | `Liveness probe failed` with `401` | The probe paths must stay in `PATHS_TO_BE_SKIPPED` in `ApiKeyFilter` (kubelet sends no `apiKey` header). |
 | `OOMKilled` | The pod exceeded `limits.memory`. Heap dump + GC log are saved on the `cosmo-dumps` PVC (`/dumps`). |
 
@@ -441,7 +441,7 @@ uses only free/open-source tooling. Three layers work together:
 
 | Probe | Path | What happens on failure |
 | --- | --- | --- |
-| `startupProbe` | `/actuator/health/startup` | gives the JVM time to start before the other probes run |
+| `startupProbe` | `/actuator/health/liveness` | gives the JVM time to start before the other probes run |
 | `livenessProbe` | `/actuator/health/liveness` | kubelet kills and restarts the pod (`CrashLoopBackOff` with backoff) |
 | `readinessProbe` | `/actuator/health/readiness` | the pod is removed from the Service — the frontend never sees 502 |
 
@@ -485,7 +485,7 @@ Page, so the Page must be a participant of the group chat. It needs `FB_PAGE_TOK
    FB_PAGE_TOKEN=<page-token> ./k8s/scripts/find-thread.sh
    ```
 4. Put the picked `id` (a `t_id_...` value) into `/cosmo/.env-prod` as `MESSENGER_RECIPIENT_ID`
-   and recreate the `cosmo-env` Secret (`k8s/apply.sh` step 1).
+   and recreate the `cosmo-env` Secret (`k8s/apply.sh` step 2).
 5. Verify with a test message:
    ```shell
    FB_PAGE_TOKEN=<page-token> ./k8s/scripts/find-thread.sh --test t_id_... "test alert"
@@ -504,18 +504,19 @@ Available placeholders: `{POD}`, `{RESTARTS_PREV}`, `{RESTARTS_NOW}`, `{REASON}`
 `{LOG_SNIPPET}` (last ~15 lines of the crashed pod's logs). Keep only what you want.
 
 **Delivery guarantee:** if the Messenger API call fails (e.g. transient error), the message is
-saved to `pending-alert.txt` on the `cosmo-incidents` PVC and **retried on the next CronJob run**
-— an alert is never silently lost.
+saved as a per-incident file under `pending/` on the `cosmo-incidents` PVC and **retried on the
+next CronJob run** — alerts are never silently lost, and a failed retry does not discard other
+pending alerts.
 
 ### What to configure so everything works
 
 | Element | Configuration |
 | --- | --- |
-| Backend env | Secret `cosmo-env` built from `/cosmo/.env-prod` (`k8s/apply.sh` step 1) |
-| Image pull (private repo) | Secret `regcred` (`k8s/apply.sh` step 0; CI refreshes it on every deploy) |
+| Backend env | Secret `cosmo-env` built from `/cosmo/.env-prod` (`k8s/apply.sh` step 2; CI refreshes it on every deploy) |
+| Image pull (private repo) | Secret `regcred` (`k8s/apply.sh` step 1; CI refreshes it on every deploy) |
 | Heap dumps | PVC `cosmo-dumps`, mounted at `/dumps` in the backend Deployment |
 | Crash-watcher dumps + state | PVC `cosmo-incidents`, mounted at `/data` in the CronJob |
-| Watcher scripts | ConfigMap `crash-watcher-scripts` built from `k8s/scripts/` (`k8s/apply.sh` step 3) |
+| Watcher scripts | ConfigMap `crash-watcher-scripts` built from `k8s/scripts/` (`k8s/apply.sh` step 4) |
 | Messenger alerts | `FB_PAGE_TOKEN` + `MESSENGER_RECIPIENT_ID` in `/cosmo/.env-prod` → Secret `cosmo-env`. Find the thread id with `k8s/scripts/find-thread.sh` |
 | Watcher image | `alpine/k8s:<tag>` in `k8s/crash-watcher.yaml` — pin the tag to your cluster version |
 | Storage | PVCs are `ReadWriteOnce` → works on a single-node cluster (k3s); use RWX on multi-node |
@@ -533,8 +534,12 @@ Verify:
 kubectl -n cosmo get pods                      # all pods Running/Ready
 kubectl -n cosmo get cronjob crash-watcher
 kubectl -n cosmo rollout status deployment/backend
-curl http://localhost:8080/actuator/health/liveness    # {"status":"UP"}
+kubectl -n cosmo port-forward svc/backend 8080:80   # keep running; Ctrl+C to stop
+curl http://localhost:8080/actuator/health/liveness   # {"status":"UP"} (in another terminal)
 ```
+
+> The Service is cluster-internal, so the `curl` only works while the
+> `kubectl port-forward` above is running (the CI deploy uses the same approach on port 8081).
 
 Every subsequent deploy goes through CI (`kubectl set image` + `rollout`) — no manual steps.
 

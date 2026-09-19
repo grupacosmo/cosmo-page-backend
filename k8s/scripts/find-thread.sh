@@ -37,7 +37,7 @@ if [ "${1:-}" = "--test" ]; then
   exit 0
 fi
 
-RESP=$(curl -sS "$GRAPH/me/conversations?fields=id,updated_time,message_count,participants{id,name}&limit=100&access_token=$FB_PAGE_TOKEN")
+RESP=$(curl -g -sS "$GRAPH/me/conversations?fields=id,updated_time,message_count,participants{id,name}&limit=100&access_token=$FB_PAGE_TOKEN")
 if echo "$RESP" | grep -q '"error"'; then
   echo "Graph API error: $RESP" >&2
   exit 1
@@ -52,7 +52,7 @@ echo "            alerts land in the chat where your users are."
 echo "  [1:1]   = private conversation between the Page and one user."
 echo "  1. The Page must be a participant of the Messenger group (add it to the group)."
 echo "  2. Pick the id of a conversation marked [GROUP] (t_id_...)."
-echo "  3. Put it as MESSENGER_RECIPIENT_ID in /cosmo/.env-prod and recreate the cosmo-env Secret (k8s/apply.sh step 1)."
+echo "  3. Put it as MESSENGER_RECIPIENT_ID in /cosmo/.env-prod and recreate the cosmo-env Secret (k8s/apply.sh step 2)."
 echo "  4. Test: FB_PAGE_TOKEN=<token> ./find-thread.sh --test t_id_... \"test alert\""
 echo
 echo "NOTE (24h messaging window): a Page can only message within 24h of the last"
