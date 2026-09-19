@@ -1,0 +1,9 @@
+🚨 Uwaga! Coś padło na serwerze 🚨
+
+😱 Hej, sprawdźcie serwer — strona nie działa!
+
+📦 Pod: {POD}
+🔄 Restarty: {RESTARTS_PREV} → {RESTARTS_NOW}
+🩺 Powód: {REASON} (exit {EXIT_CODE})
+🏷️ Wersja: {IMAGE}
+📄 Dump: {DUMP}

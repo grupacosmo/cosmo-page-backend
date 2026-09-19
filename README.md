@@ -255,6 +255,8 @@ integration tests.
 | `PROD_URL` | prod | public URL of the API | `http://localhost:8080` |
 | `POSTGRES_HOST_PORT` | local | host port for the compose Postgres | `5432` |
 | `JAVA_OPTS` | optional | JVM flags for the container (`java $JAVA_OPTS -jar ...`) | empty |
+| `MESSENGER_RECIPIENT_ID` | k8s crash-watcher | Messenger thread id of the alert group (Graph API `recipient.id`, e.g. `t_id_...`); required for the CronJob to start | empty |
+| `FB_API_VERSION` | k8s crash-watcher | Facebook Graph API version used by the notifier | `v21.0` |
 
 ### 9. Facebook emulator vs real API
 
@@ -291,6 +293,11 @@ integration tests.
 | Database data gone | `docker compose down -v` wipes the `postgres-data` volume (intentional reset). |
 | `Schema validation failed` / Flyway migration error (prod) | The DB schema does not match the entities. Add a new `V<next>__*.sql` migration instead of relying on `ddl-auto`. |
 | I want to know which commit is deployed | `curl http://localhost:8080/actuator/info` reports the git commit (prod exposes `health` + `info`). |
+| Pod restarts in a loop (`CrashLoopBackOff`) | `kubectl -n cosmo logs deployment/backend --previous`. Typical causes: Flyway schema validation, bad env config, OOM. While down the pod is cut off from traffic by the readiness probe — no 502s. |
+| `ImagePullBackOff` / `ErrImagePull` | The cluster cannot pull the image from the private Docker Hub repo — the `regcred` Secret is missing/wrong. Recreate it (`k8s/apply.sh` step 0) or wait for the next deploy (CI refreshes it). |
+| crash-watcher CronJob never starts | `MESSENGER_RECIPIENT_ID` missing in `/cosmo/.env-prod` (or the `cosmo-env` Secret is stale). Add the variable and recreate the Secret (`k8s/apply.sh` step 1). |
+| `Liveness probe failed` with `401` | The probe paths must stay in `PATHS_TO_BE_SKIPPED` in `ApiKeyFilter` (kubelet sends no `apiKey` header). |
+| `OOMKilled` | The pod exceeded `limits.memory`. Heap dump + GC log are saved on the `cosmo-dumps` PVC (`/dumps`). |
 
 ---
 
@@ -308,12 +315,12 @@ The repository ships several GitHub Actions workflows:
   3. **`docker-build`** (push to `master`, after tests pass): builds with Docker layer caching,
      pushes **immutable** tags (`sha-<commit>` + `latest`) and scans the image with **Trivy**
      (results land in the GitHub Security tab).
-  4. **`deploy`** (push to `master`): deploys the new tag on the server and runs **smoke tests**
-     against the candidate (actuator health, `GET /api/posts` with the API key, Facebook webhook
-     handshake), then promotes it and verifies the final container health. If the promoted
-     container does not become healthy, the previous image is started again automatically
-     (rollback by design). Smoke tests use the first key from `API_KEYS`, so the check works even
-     when several keys are configured.
+  4. **`deploy`** (push to `master`): rolls the new tag out on the Kubernetes cluster
+     (`kubectl set image` + `rollout status`), refreshes the `regcred` imagePullSecret and runs
+     **smoke tests** through a `port-forward` (actuator health, `GET /api/posts` with the API key,
+     Facebook webhook handshake). On failure it rolls back with `kubectl rollout undo` (rollback
+     by design — the previous ReplicaSet is kept). Smoke tests use the first key from `API_KEYS`,
+     so the check works even when several keys are configured.
 
   The pipeline can also be **triggered manually** (`Actions → CI/CD → Run workflow`): pass an
   existing image tag (e.g. `sha-<old-commit>`) to redeploy or **roll back** a specific version
@@ -332,16 +339,23 @@ the following must be configured once — otherwise those jobs will fail.
 
 **1. Server prerequisites**
 
-The deploy script assumes a plain Linux server with:
+The deploy script assumes a Linux server running a **Kubernetes cluster** (e.g. **k3s**):
 
-- **Docker** installed (`docker`, `docker login`, `docker run` used by the deploy script).
-- A **Postgres** instance reachable from the server (connection details go into `.env-prod`).
-- Ports **8080** (main app) and **8081** (candidate during blue-green deploy) free and open.
+- **kubectl** installed on the server with access to the cluster (kubeconfig at `~/.kube/config`,
+  or export `KUBECONFIG`).
+- A **Postgres** instance reachable from the cluster (connection details go into
+  `/cosmo/.env-prod`).
+- The cluster can pull the image from Docker Hub (private repo → `regcred` imagePullSecret, see
+  [Kubernetes deployment](#kubernetes-deployment-self-healing-dumps-and-messenger-alerts)).
+- **One node is enough** — the PVCs in `k8s/` are `ReadWriteOnce`, so everything must land on a
+  single node (typical for k3s).
 
 **2. Env file `/cosmo/.env-prod` on the server**
 
-The deploy script runs the container with `--env-file /cosmo/.env-prod`, so this file must exist
-and contain at least the production variables from [section 8](#8-environment-variables):
+The file must exist and contain the production variables from
+[section 8](#8-environment-variables). It is the single source of truth: `k8s/apply.sh` turns it
+into the `cosmo-env` Kubernetes Secret — the deployed pods and the crash-watcher read their
+variables from that Secret, not from the file directly.
 
 ```shell
 SPRING_PROFILES_ACTIVE=prod
@@ -351,10 +365,11 @@ POSTGRES_PASSWORD=...
 API_KEYS=key1,key2
 API_KEYS_REQUIRED=true
 FB_TOKEN=...
-FB_PAGE_TOKEN=...        # optional if the token is stored via POST /api/facebook/token
+FB_PAGE_TOKEN=...              # also used by the crash-watcher Messenger alerts
 FB_PAGE_ID=...
 CORS_ALLOWED_ORIGINS=https://cosmopk.pl
 PROD_URL=https://cosmopk.pl
+MESSENGER_RECIPIENT_ID=t_id_...  # required: Messenger thread id for crash-watcher alerts
 ```
 
 The smoke tests read `API_KEYS` (first key) and `FB_TOKEN` directly from this file
@@ -367,10 +382,10 @@ Create these under `Settings → Secrets and variables → Actions` of the repos
 
 | Secret | Used for | Notes |
 | --- | --- | --- |
-| `DOCKERHUB_USERNAME` | `docker login` (push + pull of the image) | Docker Hub account |
-| `DOCKERHUB_TOKEN` | `docker login` | access token, not the account password |
+| `DOCKERHUB_USERNAME` | push image (docker-build) + `regcred` imagePullSecret | Docker Hub account |
+| `DOCKERHUB_TOKEN` | push image + `regcred` | access token, not the account password |
 | `SERVER_HOST` | SSH target host of the deploy job | e.g. `cosmo.example.com` |
-| `SERVER_USER` | SSH user | must be able to run `docker` commands |
+| `SERVER_USER` | SSH user | must have `kubectl` access to the cluster |
 | `SERVER_KEY` | SSH private key for GitHub Actions | see below |
 
 **4. SSH key for GitHub Actions**
@@ -383,16 +398,145 @@ pair, installs the public part on the server (`authorized_keys`) and leaves the 
 ./scripts/key-config.sh <user>@<server-host> your-email@example.com
 ```
 
-Then paste the **private key** as the `SERVER_KEY` secret. The user must have permission to run
-`docker` (e.g. member of the `docker` group) because the deploy script logs into Docker Hub and
-manages containers directly.
+Then paste the **private key** as the `SERVER_KEY` secret. The user must have access to the
+Kubernetes cluster (`kubectl`) because the deploy job runs `kubectl set image`, `rollout` and the
+smoke tests against it.
 
 **5. First deploy**
 
-Everything above in place, simply push to `master`. The pipeline runs
-`test → docker-build → deploy`; if the promoted container fails its health check, the previous
-image is restarted automatically. To (re)deploy a specific version later, use
-`Actions → CI/CD → Run workflow` with a `tag` input (e.g. `sha-<commit>`).
+Before the first push run [`k8s/apply.sh`](./k8s/apply.sh) once on the server — it creates the
+`regcred` + `cosmo-env` Secrets, the namespace, the backend Deployment/Service and the
+crash-watcher CronJob (see [Kubernetes deployment](#kubernetes-deployment-self-healing-dumps-and-messenger-alerts)).
+Then simply push to `master`: the pipeline runs `test → docker-build → deploy` and rolls the new
+tag out on the cluster; on failure it rolls back automatically. To (re)deploy a specific version
+later, use `Actions → CI/CD → Run workflow` with a `tag` input (e.g. `sha-<commit>`).
+
+## Kubernetes deployment: self-healing, dumps and Messenger alerts
+
+Production runs on a **Kubernetes** cluster (e.g. k3s). Everything lives in the `k8s/` folder and
+uses only free/open-source tooling. Three layers work together:
+
+### End-to-end checklist (from zero to working)
+
+1. **Server + cluster** — a Linux server running **k3s** with `kubectl` access (kubeconfig at
+   `~/.kube/config`), plus a reachable **Postgres**. See *One-time setup → 1. Server
+   prerequisites*.
+2. **Env file** — create `/cosmo/.env-prod` on the server with all prod variables and add
+   **`MESSENGER_RECIPIENT_ID`** (see *One-time setup → 2. Env file* and `.env.example`).
+3. **Messenger** — give your FB user a **Page admin/tester role**, add the **Page to the group
+   chat**, find the group's `t_id_...` with `k8s/scripts/find-thread.sh` and put it into
+   `/cosmo/.env-prod` (details in [#3-alerts-on-messenger](#3-alerts-on-messenger)).
+4. **GitHub secrets** — `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN`, `SERVER_HOST`/`SERVER_USER`/
+   `SERVER_KEY` (see *One-time setup → 3./4.*).
+5. **Install once on the server** — `cd k8s && ./apply.sh` (creates `regcred`, `cosmo-env`,
+   namespace, backend Deployment/Service, crash-watcher CronJob).
+6. **Deploy** — push to `master` (or `Actions → CI/CD → Run workflow`): the pipeline runs
+   `test → docker-build → deploy` (k8s rollout + smoke tests + rollback on failure).
+7. **Verify** — `kubectl -n cosmo get pods` (all `Running/Ready`), then a test alert:
+   `FB_PAGE_TOKEN=<token> ./k8s/scripts/find-thread.sh --test t_id_... "test alert"`.
+
+### 1. Self-healing
+
+`k8s/backend.yaml` deploys **2 replicas** with probes:
+
+| Probe | Path | What happens on failure |
+| --- | --- | --- |
+| `startupProbe` | `/actuator/health/startup` | gives the JVM time to start before the other probes run |
+| `livenessProbe` | `/actuator/health/liveness` | kubelet kills and restarts the pod (`CrashLoopBackOff` with backoff) |
+| `readinessProbe` | `/actuator/health/readiness` | the pod is removed from the Service — the frontend never sees 502 |
+
+Required code setup (already in the repo): `management.endpoint.health.probes.enabled: true` in
+`application-prod.yml`, and the probe paths added to `PATHS_TO_BE_SKIPPED` in `ApiKeyFilter.java`
+(kubelet sends no `apiKey` header — without the exemption the probes would fail closed and the
+pod would restart forever).
+
+### 2. Logs and "why it died" dumps
+
+- **Heap dump / GC** — the Deployment runs the JVM with
+  `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps/ -Xlog:gc:/dumps/gc.log`; the files
+  land on the `cosmo-dumps` PVC, so they survive a pod restart.
+- **Crash-watcher** — `k8s/crash-watcher.yaml` is a CronJob (every minute). When the
+  `restartCount` of a pod increases, it saves `logs.txt` (`--previous`), `events.txt`,
+  `describe.txt` and `pod.yaml` under `dump-<timestamp>-<pod>/` on the `cosmo-incidents` PVC and
+  sends an alert (next layer).
+
+### 3. Alerts on Messenger
+
+The alert lands in a **regular Messenger group chat** (not on the Page's timeline/feed). The Page
+is only the **sender identity**: the Graph API `POST /v21.0/me/messages` sends on behalf of the
+Page, so the Page must be a participant of the group chat. It needs `FB_PAGE_TOKEN` (already in
+`/cosmo/.env-prod`) and a **`MESSENGER_RECIPIENT_ID`** — the **thread id of that group chat** (e.g.
+`t_id_...`).
+
+**One-time setup** (so the alerts always reach the group):
+
+1. **Give your FB user a Page admin/tester role** (`Settings → Page roles`). This exempts the
+   conversation from Messenger's **24h messaging window** — without it the Page can only send
+   within 24h of the last user message in the group, so a quiet group would block the alerts.
+2. **Add the Page to the group chat.** In the Messenger app (phone or desktop), open the group
+   chat → add participants → search and pick the Page (the Page must allow messages, i.e. not
+   restricted to admins only). The Page then appears in the participant list and the alerts show
+   up as normal chat messages in that group.
+3. **Find `MESSENGER_RECIPIENT_ID`** = the **conversation/thread id** of that group (not the user
+   id). List the Page's conversations with
+   [`k8s/scripts/find-thread.sh`](./k8s/scripts/find-thread.sh) — it prints every conversation,
+   marking group chats as `[GRUPA]` (pick one of those) vs `[1:1]`:
+   ```shell
+   FB_PAGE_TOKEN=<page-token> ./k8s/scripts/find-thread.sh
+   ```
+4. Put the picked `id` (a `t_id_...` value) into `/cosmo/.env-prod` as `MESSENGER_RECIPIENT_ID`
+   and recreate the `cosmo-env` Secret (`k8s/apply.sh` step 1).
+5. Verify with a test message:
+   ```shell
+   FB_PAGE_TOKEN=<page-token> ./k8s/scripts/find-thread.sh --test t_id_... "test alert"
+   ```
+
+**Customize the alert message.** The text is a template in
+[`k8s/scripts/alert-template.txt`](./k8s/scripts/alert-template.txt) (Polish, with emoji by
+default), shipped inside the `crash-watcher-scripts` ConfigMap. Edit it without a redeploy:
+
+```shell
+kubectl -n cosmo edit configmap crash-watcher-scripts   # change alert-template.txt → the next CronJob run uses it
+```
+
+Available placeholders: `{POD}`, `{RESTARTS_PREV}`, `{RESTARTS_NOW}`, `{REASON}`, `{EXIT_CODE}`,
+`{STATUS}`, `{IMAGE}` (image tag/commit), `{DUMP}` (PVC `cosmo-incidents` dump path),
+`{LOG_SNIPPET}` (last ~15 lines of the crashed pod's logs). Keep only what you want.
+
+**Delivery guarantee:** if the Messenger API call fails (e.g. transient error), the message is
+saved to `pending-alert.txt` on the `cosmo-incidents` PVC and **retried on the next CronJob run**
+— an alert is never silently lost.
+
+### What to configure so everything works
+
+| Element | Configuration |
+| --- | --- |
+| Backend env | Secret `cosmo-env` built from `/cosmo/.env-prod` (`k8s/apply.sh` step 1) |
+| Image pull (private repo) | Secret `regcred` (`k8s/apply.sh` step 0; CI refreshes it on every deploy) |
+| Heap dumps | PVC `cosmo-dumps`, mounted at `/dumps` in the backend Deployment |
+| Crash-watcher dumps + state | PVC `cosmo-incidents`, mounted at `/data` in the CronJob |
+| Watcher scripts | ConfigMap `crash-watcher-scripts` built from `k8s/scripts/` (`k8s/apply.sh` step 3) |
+| Messenger alerts | `FB_PAGE_TOKEN` + `MESSENGER_RECIPIENT_ID` in `/cosmo/.env-prod` → Secret `cosmo-env`. Find the thread id with `k8s/scripts/find-thread.sh` |
+| Watcher image | `alpine/k8s:<tag>` in `k8s/crash-watcher.yaml` — pin the tag to your cluster version |
+| Storage | PVCs are `ReadWriteOnce` → works on a single-node cluster (k3s); use RWX on multi-node |
+
+### One-time install
+
+```shell
+cd k8s
+./apply.sh   # creates regcred + cosmo-env Secrets, backend Deployment/Service, crash-watcher CronJob
+```
+
+Verify:
+
+```shell
+kubectl -n cosmo get pods                      # all pods Running/Ready
+kubectl -n cosmo get cronjob crash-watcher
+kubectl -n cosmo rollout status deployment/backend
+curl http://localhost:8080/actuator/health/liveness    # {"status":"UP"}
+```
+
+Every subsequent deploy goes through CI (`kubectl set image` + `rollout`) — no manual steps.
 
 ## Observability (bug hunting)
 

@@ -1,0 +1,118 @@
+# Produkcyjny backend na Kubernetes.
+# Wymagany wcześniej Secret `cosmo-env` (patrz k8s/apply.sh):
+#   kubectl -n cosmo create secret generic cosmo-env --from-env-file=/cosmo/.env-prod --dry-run=client -o yaml | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cosmo
+---
+# Heap dumps + GC logs przetrwaja restart poda. Uwaga: ReadWriteOnce =
+# dziala na klastrze jednorodowym (k3s/single-node). Przy multi-node daj RWX.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cosmo-dumps
+  namespace: cosmo
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: cosmo
+  labels:
+    app: cosmo-backend
+spec:
+  # 2 repliki: podczas restartu jednej druga obsluguje ruch (zero-downtime).
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cosmo-backend
+  template:
+    metadata:
+      labels:
+        app: cosmo-backend
+    spec:
+      # Obraz lezy na prywatnym repo Docker Hub - pod musi sie zalogowac do rejestru.
+      # Secret `regcred` tworzy k8s/apply.sh (krok 0).
+      imagePullSecrets:
+        - name: regcred
+      # fsGroup = uid kontenera (cosmopk z Dockerfile), zeby JVM mogl pisac na PVC.
+      securityContext:
+        fsGroup: 1001
+      # 30s na graceful shutdown JVM (Spring shutdown hook).
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: cosmopk/cosmo-page-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: cosmo-env
+          env:
+            # Heap dump + GC log na PVC przy OOM/panicu JVM.
+            - name: JAVA_OPTS
+              value: "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps/ -Xlog:gc:/dumps/gc.log"
+          startupProbe:
+            httpGet:
+              path: /actuator/health/startup
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            # Kubelet restartuje pod, gdy appka przestaje zyc (maks. 3x, potem CrashLoopBackOff).
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            # Niedzialajacy pod jest odcinany z Service - frontend nie widzi 502.
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          lifecycle:
+            preStop:
+              # Drenaż: chwila na wyrejestrowanie z Service zanim padnie.
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          volumeMounts:
+            - name: dumps
+              mountPath: /dumps
+      volumes:
+        - name: dumps
+          persistentVolumeClaim:
+            claimName: cosmo-dumps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: cosmo
+spec:
+  selector:
+    app: cosmo-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

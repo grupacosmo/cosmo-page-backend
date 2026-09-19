@@ -1,0 +1,103 @@
+# crash-watcher: CronJob co minute sprawdza restarty podow backendu.
+# Przy wykryciu restartu zbiera dump (logi/events/describe) na PVC cosmo-incidents
+# i wysyla powiadomienie na Messengera (skrypty w ConfigMap crash-watcher-scripts,
+# tworzonej przez apply.sh z katalogu scripts/).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crash-watcher
+  namespace: cosmo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: crash-watcher
+  namespace: cosmo
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: crash-watcher
+  namespace: cosmo
+subjects:
+  - kind: ServiceAccount
+    name: crash-watcher
+    namespace: cosmo
+roleRef:
+  kind: Role
+  name: crash-watcher
+  apiGroup: rbac.authorization.k8s.io
+---
+# Miejsce na dumpy incydentow + plik stanu (porownanie restartCount miedzy uruchomieniami).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cosmo-incidents
+  namespace: cosmo
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: crash-watcher
+  namespace: cosmo
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          serviceAccountName: crash-watcher
+          restartPolicy: OnFailure
+          containers:
+            - name: crash-watcher
+              # Obraz z kubectl + curl + jq. Dopasuj tag do wersji klastra.
+              image: alpine/k8s:1.31.2
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "/scripts/watch.sh"]
+              env:
+                - name: WATCH_NAMESPACE
+                  value: "cosmo"
+                - name: WATCH_LABEL
+                  value: "app=cosmo-backend"
+                - name: FB_PAGE_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cosmo-env
+                      key: FB_PAGE_TOKEN
+                - name: MESSENGER_RECIPIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cosmo-env
+                      key: MESSENGER_RECIPIENT_ID
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: incidents
+                  mountPath: /data
+          volumes:
+            - name: scripts
+              configMap:
+                name: crash-watcher-scripts
+                defaultMode: 0755
+            - name: incidents
+              persistentVolumeClaim:
+                claimName: cosmo-incidents

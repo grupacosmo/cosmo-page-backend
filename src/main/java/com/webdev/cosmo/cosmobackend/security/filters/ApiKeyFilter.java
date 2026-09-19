@@ -34,7 +34,9 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             "/api/facebook/notif",
             "/api/user-privacy/terms",
             "/api/user-privacy/policy",
-            "/actuator/health"
+            "/actuator/health",
+            "/actuator/health/liveness",
+            "/actuator/health/readiness"
     );
 
     @PostConstruct
